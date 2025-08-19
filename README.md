@@ -1,198 +1,252 @@
-# Aptitude Prep - AI-Powered Exam Preparation Platform
+# 🚀 PrepVista - AI-Powered Aptitude Exam Preparation Platform
 
-An intelligent aptitude exam preparation platform that uses Gemini AI to generate personalized questions, provide instant feedback, and offer shortcut tricks for competitive exams like UPSC, MPSC, College Placements, IBPS, SSC, and CAT.
+## 📁 Project Structure
 
-## 🚀 Features
-
-- **Multiple Exam Types**: Support for UPSC, MPSC, College Placements, IBPS, SSC, and CAT
-- **Topic-wise Practice**: Organized questions by subject and difficulty level
-- **AI-Powered Questions**: Gemini AI generates contextual questions for each exam type
-- **Instant Feedback**: AI analyzes answers and provides detailed explanations
-- **Shortcut Tricks**: Learn time-saving techniques and strategies
-- **Progress Tracking**: Monitor your performance across topics
-- **Modern UI**: Beautiful, responsive interface built with Next.js and Tailwind CSS
-
-## 🏗️ Architecture
-
-- **Frontend**: Next.js 14 with TypeScript and Tailwind CSS
-- **Backend**: FastAPI with Python
-- **AI Integration**: Google Gemini AI for question generation and feedback
-- **Real-time Communication**: RESTful API with CORS support
-
-## 📋 Prerequisites
-
-- Node.js 18+ and pnpm
-- Python 3.8+
-- Google Gemini AI API key
-
-## 🛠️ Installation
-
-### 1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd BuddiBaaz
+```
+PrepVista/
+├── 🧠 ai-backend/          # Python AI backend with Gemini integration
+│   ├── main.py             # FastAPI server with session management
+│   ├── requirements.txt    # Python dependencies
+│   └── Dockerfile         # Backend containerization
+├── 🎨 frontend/            # Next.js React frontend
+│   ├── app/               # Next.js app directory
+│   ├── components/        # React components
+│   ├── lib/              # API utilities and types
+│   ├── config/           # Configuration files
+│   └── package.json      # Node.js dependencies
+├── 📚 docs/               # Documentation and guides
+│   ├── README.md         # This file
+│   ├── SETUP.md          # Setup instructions
+│   ├── SESSION_SYSTEM_README.md  # Session system documentation
+│   ├── DEPLOYMENT.md     # Deployment guide
+│   ├── DEPLOYMENT_CHECKLIST.md # Deployment checklist
+│   └── TROUBLESHOOTING.md # Troubleshooting guide
+├── 🛠️ scripts/            # Utility and startup scripts
+│   ├── start-system.sh   # Start both backend and frontend
+│   ├── deploy.sh         # Automated deployment script
+│   ├── setup-backend.sh  # Backend setup script
+│   ├── start-backend.sh  # Backend startup script
+│   ├── start-frontend.sh # Frontend startup script
+│   ├── quick-start.sh    # Quick setup script
+│   └── docker-compose.yml # Docker orchestration
+├── 🧪 tests/              # Test files and scripts
+│   ├── test-session.py   # Session system tests
+│   ├── test-api.py       # API endpoint tests
+│   └── test-setup.py     # Setup validation tests
+└── 📋 .gitignore          # Git ignore patterns
 ```
 
-### 2. Install Frontend Dependencies
+## 🎯 Features
+
+### ✨ **Session-Based Practice System**
+
+- **10 questions per session** with 2-minute timer
+- **Real-time progress tracking** and countdown
+- **Comprehensive feedback** on wrong answers after completion
+- **AI-powered question generation** using Google Gemini
+
+### 🧠 **AI Integration**
+
+- **Gemini 1.5 Flash** for fast, free question generation
+- **Fallback questions** when AI is unavailable
+- **Smart prompt engineering** for exam-specific content
+- **Multiple exam types** (IBPS, UPSC, SSC, CAT, etc.)
+
+### 🎨 **Modern Frontend**
+
+- **Next.js 14** with React and TypeScript
+- **Tailwind CSS** for beautiful, responsive design
+- **Real-time updates** and smooth animations
+- **Mobile-optimized** interface
+
+## 🚀 Quick Start
+
+### **Option 1: Automated Startup**
 
 ```bash
-pnpm install
+# Make script executable and start
+chmod +x scripts/start-system.sh
+./scripts/start-system.sh
 ```
 
-### 3. Install Backend Dependencies
+### **Option 2: Manual Startup**
 
 ```bash
-cd backend
+# Terminal 1: Start AI Backend
+cd ai-backend
+python3 main.py
+
+# Terminal 2: Start Frontend
+cd frontend
+npm run dev
+```
+
+### **Option 3: Docker (Coming Soon)**
+
+```bash
+docker-compose up
+```
+
+## 🌐 **Deployment**
+
+### **🚀 Quick Deployment**
+
+```bash
+# Run automated deployment script
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+```
+
+### **📋 Deployment Options**
+
+- **Frontend**: Deploy to [Vercel](https://vercel.com) (Next.js optimized) or [Netlify](https://netlify.com)
+- **Backend**: Deploy to [Railway](https://railway.app) or [Render](https://render.com)
+- **Database**: Use [Supabase](https://supabase.com) for session storage (optional)
+
+### **📚 Deployment Guides**
+
+- **Complete Guide**: `docs/DEPLOYMENT.md`
+- **Step-by-Step Checklist**: `docs/DEPLOYMENT_CHECKLIST.md`
+- **Automated Script**: `scripts/deploy.sh`
+
+## 🧪 Testing
+
+### **Test the Session System**
+
+```bash
+python3 tests/test-session.py
+```
+
+### **Test API Endpoints**
+
+```bash
+python3 tests/test-api.py
+```
+
+### **Validate Setup**
+
+```bash
+python3 tests/test-setup.py
+```
+
+## 📊 API Endpoints
+
+### **Session Management**
+
+- `POST /api/session` - Create practice session
+- `POST /api/session/{id}/answer` - Submit answer
+- `POST /api/session/{id}/complete` - Complete session
+- `GET /api/session/{id}/status` - Session status
+
+### **Question Generation**
+
+- `POST /api/questions` - Generate AI questions
+- `POST /api/feedback` - Generate AI feedback
+
+### **System Health**
+
+- `GET /health` - System health check
+- `GET /model-info` - AI model information
+- `GET /test-ai` - Test AI connection
+
+## 🛠️ Development
+
+### **Backend Development**
+
+```bash
+cd ai-backend
+# Install dependencies
 pip install -r requirements.txt
+# Run with auto-reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 4. Environment Setup
+### **Frontend Development**
 
 ```bash
-cd backend
-cp env.example .env
+cd frontend
+# Install dependencies
+npm install
+# Run development server
+npm run dev
 ```
 
-Edit `.env` and add your Google Gemini AI API key:
-
-```env
-GOOGLE_API_KEY=your_actual_api_key_here
-```
-
-Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-## 🚀 Running the Application
-
-### Start the Backend (FastAPI)
+### **Environment Setup**
 
 ```bash
-cd backend
-python main.py
+# Copy environment template
+cp ai-backend/env.example ai-backend/.env
+# Edit with your Google API key
+nano ai-backend/.env
 ```
 
-The backend will run on `http://localhost:8000`
+## 🔧 Configuration
 
-### Start the Frontend (Next.js)
+### **Required Environment Variables**
 
 ```bash
-# In a new terminal
-pnpm dev
+# AI Backend (.env)
+GOOGLE_API_KEY=your_gemini_api_key_here
 ```
 
-The frontend will run on `http://localhost:3000`
+### **Optional Configuration**
 
-## 📱 Usage
+- **Question count**: Default 10 per session
+- **Time limit**: Default 2 minutes per session
+- **AI model**: Default gemini-1.5-flash
+- **Fallback questions**: Available for all topics
 
-1. **Select Exam Type**: Choose from UPSC, MPSC, College Placements, IBPS, SSC, or CAT
-2. **Choose Topic**: Select a specific subject area (Mathematics, Reasoning, English, etc.)
-3. **Practice Questions**: Answer AI-generated questions with timer
-4. **Get Feedback**: Receive instant AI-powered feedback with explanations and shortcuts
-5. **Track Progress**: Monitor your performance and improvement
+## 📈 Performance Features
 
-## 🔧 API Endpoints
+- **Session caching** with automatic cleanup
+- **Batch answer processing** for better performance
+- **Fallback question system** for reliability
+- **Real-time progress tracking** with minimal API calls
 
-### Questions
+## 🎓 Supported Exam Types
 
-- `POST /api/questions` - Generate AI-powered questions
-- `GET /api/exam-types` - Get available exam types
-- `GET /api/topics/{exam_type}` - Get topics for specific exam
+- **IBPS** - Banking Personnel Selection
+- **UPSC** - Civil Services Examination
+- **SSC** - Staff Selection Commission
+- **CAT** - Common Admission Test
+- **MPSC** - Maharashtra Public Service Commission
+- **College Placements** - Campus Recruitment Tests
 
-### Feedback
+## 🧠 Supported Topics
 
-- `POST /api/feedback` - Generate AI-powered feedback for answers
-
-## 🎯 Exam Types & Topics
-
-### UPSC Civil Services
-
-- Mathematics, Logical Reasoning, English Language, General Awareness
-
-### MPSC
-
-- Mathematics, Reasoning Ability, English, Marathi
-
-### College Placements
-
-- Quantitative Aptitude, Logical Reasoning, Verbal Ability, Data Interpretation
-
-### IBPS
-
-- Quantitative Aptitude, Reasoning, English Language, Computer Knowledge
-
-### SSC
-
-- Mathematics, General Intelligence, English Language, General Knowledge
-
-### CAT
-
-- Quantitative Aptitude, Verbal Ability, Data Interpretation, Logical Reasoning
-
-## 🧠 AI Features
-
-- **Smart Question Generation**: Context-aware questions based on exam type and topic
-- **Personalized Feedback**: Tailored explanations and improvement tips
-- **Shortcut Learning**: Time-saving techniques and strategies
-- **Adaptive Difficulty**: Questions adjust based on performance
-
-## 🎨 UI Components
-
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Modern Interface**: Clean, intuitive design with smooth animations
-- **Progress Tracking**: Visual progress bars and score indicators
-- **Interactive Elements**: Hover effects and smooth transitions
-
-## 🔒 Security Features
-
-- CORS configuration for secure API communication
-- Environment variable management for sensitive data
-- Input validation and sanitization
-
-## 🚀 Deployment
-
-### Frontend (Vercel)
-
-```bash
-pnpm build
-# Deploy to Vercel or your preferred hosting platform
-```
-
-### Backend (Docker)
-
-```bash
-cd backend
-docker build -t aptitude-prep-api .
-docker run -p 8000:8000 aptitude-prep-api
-```
+- **Quantitative Aptitude** - Numbers, algebra, geometry
+- **Logical Reasoning** - Puzzles, blood relations, coding
+- **English Language** - Grammar, vocabulary, comprehension
+- **General Awareness** - Current affairs, static GK
+- **Computer Knowledge** - Basic concepts and applications
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Make your changes**
+4. **Add tests** for new functionality
+5. **Submit a pull request**
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 
-For support and questions:
+- **Documentation**: Check the `docs/` folder
+- **Troubleshooting**: See `docs/TROUBLESHOOTING.md`
+- **Deployment**: See `docs/DEPLOYMENT.md`
+- **Issues**: Create a GitHub issue
+- **Discussions**: Use GitHub Discussions
 
-- Create an issue in the repository
-- Check the API documentation at `http://localhost:8000/docs`
+## 🎉 Acknowledgments
 
-## 🔮 Future Enhancements
-
-- User authentication and progress saving
-- More exam types and topics
-- Advanced analytics and performance insights
-- Mobile app development
-- Offline question bank
-- Collaborative study groups
+- **Google Gemini AI** for question generation
+- **FastAPI** for high-performance backend
+- **Next.js** for modern frontend framework
+- **Tailwind CSS** for beautiful styling
 
 ---
 
-**Built with ❤️ using Next.js, FastAPI, and Gemini AI**
+**Made with ❤️ for better exam preparation**

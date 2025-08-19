@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Calculator, Percent, Clock, TrendingUp, BookOpen, Target } from 'lucide-react';
 import QuestionPractice from './QuestionPractice';
 import Header from './Header';
+import { api } from '../lib/api';
 
 interface ExamSelectionProps {
   examType: string;
@@ -60,7 +61,36 @@ const examNames = {
 
 export default function ExamSelection({ examType, onBack }: ExamSelectionProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const topics = examTopics[examType as keyof typeof examTopics] || [];
+  const [topics, setTopics] = useState<Array<{id: string, name: string, icon: any, description: string}>>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Load topics from API
+  useEffect(() => {
+    const loadTopics = async () => {
+      try {
+        const apiTopics = await api.getTopics(examType);
+        // Map API topics to UI format
+        const mappedTopics = apiTopics.topics.map(topicId => {
+          const staticTopic = examTopics[examType as keyof typeof examTopics]?.find(t => t.id === topicId);
+          return staticTopic || {
+            id: topicId,
+            name: topicId.charAt(0).toUpperCase() + topicId.slice(1).replace('-', ' '),
+            icon: BookOpen,
+            description: `Practice ${topicId} questions`
+          };
+        });
+        setTopics(mappedTopics);
+      } catch (error) {
+        console.error('Failed to load topics from API:', error);
+        // Fallback to static topics
+        setTopics(examTopics[examType as keyof typeof examTopics] || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadTopics();
+  }, [examType]);
 
   if (selectedTopic) {
     return (
@@ -69,6 +99,20 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
         topic={selectedTopic}
         onBack={() => setSelectedTopic(null)}
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading topics...</p>
+          </div>
+        </div>
+      </div>
     );
   }
 

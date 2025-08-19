@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Target, TrendingUp, Award, Users, Building2 } from 'lucide-react';
 import ExamSelection from '@/components/ExamSelection';
 import Header from '@/components/Header';
+import { api } from '@/lib/api';
 
 const examTypes = [
   {
@@ -52,9 +53,54 @@ const examTypes = [
 
 export default function Home() {
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
+  const [examTypesList, setExamTypesList] = useState(examTypes);
+  const [loading, setLoading] = useState(true);
+
+  // Load exam types from API
+  useEffect(() => {
+    const loadExamTypes = async () => {
+      try {
+        const apiExamTypes = await api.getExamTypes();
+        // Map API exam types to UI format
+        const mappedExamTypes = apiExamTypes.exam_types.map(examId => {
+          const staticExam = examTypes.find(e => e.id === examId);
+          return staticExam || {
+            id: examId,
+            name: examId.charAt(0).toUpperCase() + examId.slice(1).replace('-', ' '),
+            description: `${examId} examination preparation`,
+            icon: BookOpen,
+            color: 'bg-gray-500',
+          };
+        });
+        setExamTypesList(mappedExamTypes);
+      } catch (error) {
+        console.error('Failed to load exam types from API:', error);
+        // Fallback to static exam types
+        setExamTypesList(examTypes);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadExamTypes();
+  }, []);
 
   if (selectedExam) {
     return <ExamSelection examType={selectedExam} onBack={() => setSelectedExam(null)} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading exam types...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -81,7 +127,7 @@ export default function Home() {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {examTypes.map((exam) => (
+            {examTypesList.map((exam) => (
               <div
                 key={exam.id}
                 onClick={() => setSelectedExam(exam.id)}

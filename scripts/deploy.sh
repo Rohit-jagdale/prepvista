@@ -55,8 +55,8 @@ if ! command_exists npm; then
     exit 1
 fi
 
-if ! command_exists python3; then
-    print_warning "Python 3 is not installed. Backend deployment will be skipped."
+if ! command_exists poetry; then
+    print_warning "Poetry is not installed. Backend deployment will be skipped."
     SKIP_BACKEND=true
 fi
 

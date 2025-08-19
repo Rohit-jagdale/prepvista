@@ -11,6 +11,15 @@ export interface Question {
   difficulty: string;
 }
 
+export interface ExamTypesResponse {
+  exam_types: string[];
+}
+
+export interface TopicsResponse {
+  exam_type: string;
+  topics: string[];
+}
+
 export interface SessionRequest {
   exam_type: string;
   topic: string;
@@ -181,6 +190,15 @@ class ApiClient {
     );
   }
 
+  // Exam Management APIs
+  async getExamTypes(): Promise<ExamTypesResponse> {
+    return this.request<ExamTypesResponse>('/api/exam-types');
+  }
+
+  async getTopics(examType: string): Promise<TopicsResponse> {
+    return this.request<TopicsResponse>(`/api/topics/${examType}`);
+  }
+
   // Utility methods
   getBaseUrl(): string {
     return this.baseUrl;
@@ -198,14 +216,3 @@ class ApiClient {
 
 // Export singleton instance
 export const api = new ApiClient();
-
-// Export types
-export type {
-  Question,
-  SessionRequest,
-  SessionResponse,
-  AnswerSubmission,
-  WrongAnswer,
-  SessionResult,
-  FeedbackRequest,
-};

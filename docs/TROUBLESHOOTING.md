@@ -156,8 +156,8 @@ curl -X POST http://localhost:8000/api/feedback \
 pnpm install
 
 # Backend
-cd backend
-pip install -r requirements.txt
+cd ai-backend
+poetry install
 ```
 
 #### B. Port Conflicts
@@ -176,11 +176,11 @@ kill -9 <PID>
 #### C. Python Version
 
 - Ensure Python 3.8+ is installed
-- Check with: `python3 --version`
+- Check with: `poetry --version`
 
 ## Debug Mode
 
-Enable debug logging in the backend by adding to `backend/main.py`:
+Enable debug logging in the backend by adding to `ai-backend/main.py`:
 
 ```python
 import logging

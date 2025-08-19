@@ -6,8 +6,9 @@
 PrepVista/
 ├── 🧠 ai-backend/          # Python AI backend with Gemini integration
 │   ├── main.py             # FastAPI server with session management
-│   ├── requirements.txt    # Python dependencies
-│   └── Dockerfile         # Backend containerization
+│   ├── pyproject.toml      # Poetry configuration and dependencies
+│   ├── poetry.lock         # Locked dependency versions
+│   └── Dockerfile          # Backend containerization
 ├── 🎨 frontend/            # Next.js React frontend
 │   ├── app/               # Next.js app directory
 │   ├── components/        # React components
@@ -74,7 +75,7 @@ chmod +x scripts/start-system.sh
 ```bash
 # Terminal 1: Start AI Backend
 cd ai-backend
-python3 main.py
+poetry run uvicorn main:app --reload
 
 # Terminal 2: Start Frontend
 cd frontend
@@ -114,19 +115,22 @@ chmod +x scripts/deploy.sh
 ### **Test the Session System**
 
 ```bash
-python3 tests/test-session.py
+cd ai-backend
+poetry run python ../tests/test-session.py
 ```
 
 ### **Test API Endpoints**
 
 ```bash
-python3 tests/test-api.py
+cd ai-backend
+poetry run python ../tests/test-api.py
 ```
 
 ### **Validate Setup**
 
 ```bash
-python3 tests/test-setup.py
+cd ai-backend
+poetry run python ../tests/test-setup.py
 ```
 
 ## 📊 API Endpoints
@@ -156,9 +160,9 @@ python3 tests/test-setup.py
 ```bash
 cd ai-backend
 # Install dependencies
-pip install -r requirements.txt
+poetry install
 # Run with auto-reload
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### **Frontend Development**

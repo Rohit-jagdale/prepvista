@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
-Test script to verify the Aptitude Prep backend setup
+Test script to verify the PrepVista backend setup with Poetry
 """
 
 import sys
@@ -24,21 +24,21 @@ def test_dependencies():
         import fastapi
         print("✅ FastAPI is available")
     except ImportError:
-        print("❌ FastAPI not found. Run: pip install -r backend/requirements.txt")
+        print("❌ FastAPI not found. Run: poetry install")
         return False
     
     try:
         import google.generativeai
         print("✅ Google Generative AI is available")
     except ImportError:
-        print("❌ Google Generative AI not found. Run: pip install -r backend/requirements.txt")
+        print("❌ Google Generative AI not found. Run: poetry install")
         return False
     
     try:
         import pydantic
         print("✅ Pydantic is available")
     except ImportError:
-        print("❌ Pydantic not found. Run: pip install -r backend/requirements.txt")
+        print("❌ Pydantic not found. Run: poetry install")
         return False
     
     return True
@@ -48,12 +48,12 @@ def test_environment():
     print("\n🔧 Testing environment...")
     
     # Check if .env file exists
-    if os.path.exists("backend/.env"):
+    if os.path.exists("ai-backend/.env"):
         print("✅ Backend .env file found")
         
         # Check if GOOGLE_API_KEY is set
         from dotenv import load_dotenv
-        load_dotenv("backend/.env")
+        load_dotenv("ai-backend/.env")
         
         api_key = os.getenv("GOOGLE_API_KEY")
         if api_key and api_key != "your_gemini_api_key_here":
@@ -61,21 +61,21 @@ def test_environment():
             return True
         else:
             print("⚠️  Google Gemini API key not configured or using placeholder")
-            print("   Please edit backend/.env and add your actual API key")
+            print("   Please edit ai-backend/.env and add your actual API key")
             return False
     else:
         print("❌ Backend .env file not found")
-        print("   Please copy backend/env.example to backend/.env and configure it")
+        print("   Please copy ai-backend/env.example to ai-backend/.env and configure it")
         return False
 
 def test_frontend():
     """Test frontend setup"""
     print("\n🎨 Testing frontend...")
     
-    if os.path.exists("package.json"):
+    if os.path.exists("frontend/package.json"):
         print("✅ package.json found")
         
-        if os.path.exists("node_modules"):
+        if os.path.exists("frontend/node_modules"):
             print("✅ Node modules installed")
             return True
         else:
@@ -87,7 +87,7 @@ def test_frontend():
 
 def main():
     """Main test function"""
-    print("🧪 Testing Aptitude Prep Setup")
+    print("🧪 Testing PrepVista Setup with Poetry")
     print("=" * 40)
     
     tests = [
@@ -104,29 +104,25 @@ def main():
         try:
             if test():
                 passed += 1
+            print()
         except Exception as e:
             print(f"❌ Test failed with error: {e}")
+            print()
     
-    print("\n" + "=" * 40)
+    print("=" * 40)
     print(f"📊 Test Results: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed! You're ready to start Aptitude Prep.")
-        print("\n🚀 To start the application:")
-        print("   ./quick-start.sh")
-        print("\n   Or start services individually:")
-        print("   ./start-backend.sh  # Terminal 1")
-        print("   ./start-frontend.sh # Terminal 2")
+        print("🎉 All tests passed! Setup is complete.")
+        print("\n🚀 You can now start the system:")
+        print("   ./scripts/start-system.sh")
     else:
-        print("⚠️  Some tests failed. Please fix the issues above before starting.")
-        print("\n💡 Common solutions:")
-        print("   1. Install Python 3.8+ and pip")
-        print("   2. Run: pip install -r backend/requirements.txt")
-        print("   3. Copy backend/env.example to backend/.env and add your API key")
-        print("   4. Run: pnpm install")
+        print("⚠️  Some tests failed. Please check the setup.")
+        print("\n💡 Setup commands:")
+        print("   ./scripts/setup-backend.sh  # Setup backend with Poetry")
+        print("   cd frontend && pnpm install # Setup frontend")
     
     return passed == total
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    main()

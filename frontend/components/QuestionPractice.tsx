@@ -27,20 +27,27 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes instead of 2 minutes
   const [sessionComplete, setSessionComplete] = useState(false);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [timerPaused, setTimerPaused] = useState(false);
+  const [totalTimeUsed, setTotalTimeUsed] = useState(0);
 
   // Initialize session
   useEffect(() => {
     const initializeSession = async () => {
       try {
         setLoading(true);
-        const sessionData = await api.createSession(examType, topic, 'medium');
+        const sessionData = await api.createSession({
+          exam_type: examType,
+          topic: topic,
+          difficulty: 'medium'
+        });
         setSession(sessionData);
-        setTimeLeft(sessionData.time_limit);
+        // Use a more reasonable time limit: 15 minutes for 10 questions
+        setTimeLeft(900); // 15 minutes = 900 seconds
         setQuestionStartTime(Date.now());
       } catch (error) {
         console.error('Failed to create session:', error);
@@ -53,14 +60,13 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
     initializeSession();
   }, [examType, topic]);
 
-  // Timer countdown
+  // Timer countdown - only when not paused
   useEffect(() => {
-    if (timeLeft > 0 && !sessionComplete && session) {
+    if (timeLeft > 0 && !sessionComplete && session && !timerPaused) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            // Time's up - auto-complete session
-            handleSessionComplete();
+            // Time's up - show warning but don't auto-complete
             return 0;
           }
           return prev - 1;
@@ -69,7 +75,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
       return () => clearInterval(timer);
     }
-  }, [timeLeft, sessionComplete, session]);
+  }, [timeLeft, sessionComplete, session, timerPaused]);
 
   // Track question start time
   useEffect(() => {
@@ -80,6 +86,8 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
+    // Pause timer when user is actively answering
+    setTimerPaused(true);
   };
 
   const handleNextQuestion = async () => {
@@ -93,10 +101,18 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
     
     // Submit answer to backend
     try {
-      await api.submitAnswer(session.session_id, currentQuestion.id, selectedAnswer, timeTaken);
+      await api.submitAnswer({
+        session_id: session.session_id,
+        question_id: currentQuestion.id,
+        selected_answer: selectedAnswer,
+        time_taken: timeTaken
+      });
     } catch (error) {
       console.error('Failed to submit answer:', error);
     }
+
+    // Resume timer for next question
+    setTimerPaused(false);
 
     // Move to next question or complete session
     if (currentQuestionIndex < session.questions.length - 1) {
@@ -120,6 +136,21 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
       setError('Failed to complete session. Please try again.');
     }
   };
+
+  const handleTimeUp = () => {
+    // When time runs out, show a warning but let user continue
+    if (timeLeft === 0 && !sessionComplete) {
+      // Don't auto-complete, just show warning
+      setTimerPaused(true);
+    }
+  };
+
+  // Handle time up warning
+  useEffect(() => {
+    if (timeLeft === 0 && !sessionComplete) {
+      handleTimeUp();
+    }
+  }, [timeLeft, sessionComplete]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -302,9 +333,35 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-red-600">
+              <div className="flex items-center space-x-2">
                 <Timer className="w-5 h-5" />
-                <span className="font-mono text-lg font-semibold">{formatTime(timeLeft)}</span>
+                <span className={`font-mono text-lg font-semibold ${
+                  timeLeft === 0 ? 'text-red-600' : timerPaused ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {formatTime(timeLeft)}
+                </span>
+                {timerPaused && (
+                  <span className="text-yellow-600 text-sm font-medium">(PAUSED)</span>
+                )}
+                {timeLeft === 0 && (
+                  <span className="text-red-600 text-sm font-medium">(TIME UP!)</span>
+                )}
+                {timeLeft > 0 && !timerPaused && (
+                  <button
+                    onClick={() => setTimerPaused(true)}
+                    className="ml-2 px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs rounded transition-colors"
+                  >
+                    Pause
+                  </button>
+                )}
+                {timerPaused && timeLeft > 0 && (
+                  <button
+                    onClick={() => setTimerPaused(false)}
+                    className="ml-2 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 text-xs rounded transition-colors"
+                  >
+                    Resume
+                  </button>
+                )}
               </div>
               <div className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
                 {questionsAnswered}/{session.questions.length} Answered
@@ -319,6 +376,24 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
               style={{ width: `${progress}%` }}
             ></div>
           </div>
+          
+          {/* Time Up Warning */}
+          {timeLeft === 0 && !sessionComplete && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <span className="text-red-800 font-medium">Time's up! You can continue answering questions or complete the session now.</span>
+                </div>
+                <button
+                  onClick={handleSessionComplete}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Complete Session
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Question Card */}

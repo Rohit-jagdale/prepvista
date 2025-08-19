@@ -14,7 +14,7 @@
 
 - [ ] All tests passing locally
 - [ ] Frontend builds successfully (`npm run build`)
-- [ ] Backend runs locally (`python3 main.py`)
+- [ ] Backend runs locally (`poetry run uvicorn main:app --reload`)
 - [ ] Environment variables documented
 - [ ] CORS configuration tested
 
@@ -51,7 +51,7 @@ vercel --prod
 
 ```bash
 cd ai-backend
-pip freeze > requirements.txt
+poetry lock
 git add .
 git commit -m "Prepare for deployment"
 git push origin main

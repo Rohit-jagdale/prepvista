@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Test script for the new session-based practice system
-Updated for new project structure
+Updated for new project structure with Poetry
 """
 
 import requests
@@ -103,7 +103,7 @@ def test_session_system():
         
     except requests.exceptions.ConnectionError:
         print("❌ Cannot connect to backend. Make sure it's running on http://localhost:8000")
-        print("   Start the backend with: cd ai-backend && python3 main.py")
+        print("   Start the backend with: cd ai-backend && poetry run uvicorn main:app --reload")
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
         import traceback

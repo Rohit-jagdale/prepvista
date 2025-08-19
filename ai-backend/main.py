@@ -181,7 +181,7 @@ class SessionRequest(BaseModel):
 class SessionResponse(BaseModel):
     session_id: str
     questions: List[Question]
-    time_limit: int = 120  # 2 minutes in seconds
+    time_limit: int = 900  # 15 minutes in seconds
 
 class AnswerSubmission(BaseModel):
     session_id: str
@@ -284,14 +284,38 @@ async def test_ai():
     
     try:
         logger.info("Testing Gemini AI connection")
-        response = model.generate_content("Generate a simple math question: What is 2 + 2?")
-        logger.info(f"AI test successful: {response.text[:100]}...")
-        return {
-            "status": "success",
-            "ai_response": response.text,
-            "response_length": len(response.text),
-            "mode": "ai_enabled"
-        }
+        
+        # Add timeout to test AI call
+        import asyncio
+        
+        async def test_ai_with_timeout():
+            try:
+                # Run the AI call in a thread pool to avoid blocking
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(None, lambda: model.generate_content("Generate a simple math question: What is 2 + 2?"))
+                return response
+            except Exception as e:
+                raise e
+        
+        # Execute with 10-second timeout
+        try:
+            response = await asyncio.wait_for(test_ai_with_timeout(), timeout=10.0)
+            logger.info(f"AI test successful: {response.text[:100]}...")
+            return {
+                "status": "success",
+                "ai_response": response.text,
+                "response_length": len(response.text),
+                "mode": "ai_enabled"
+            }
+        except asyncio.TimeoutError:
+            logger.error("AI test timed out after 10 seconds")
+            return {
+                "status": "timeout",
+                "error": "AI test timed out after 10 seconds",
+                "error_type": "TimeoutError",
+                "mode": "ai_enabled"
+            }
+                
     except Exception as e:
         logger.error(f"AI test failed: {str(e)}")
         logger.error(f"AI test error traceback: {traceback.format_exc()}")
@@ -437,7 +461,7 @@ async def get_model_info():
         }
 
 @app.post("/api/questions", response_model=List[Question])
-async def generate_questions(request: QuestionRequest):
+def generate_questions(request: QuestionRequest):
     """Generate AI-powered questions for the specified exam type and topic"""
     logger.info(f"Received question generation request: exam_type={request.exam_type}, topic={request.topic}, difficulty={request.difficulty}, count={request.count}")
     
@@ -499,97 +523,117 @@ async def generate_questions(request: QuestionRequest):
         
         # Check if AI model is available
         if not model:
-            logger.info("No AI model available, using fallback questions")
+            logger.info("AI model not available, using fallback questions")
             return generate_fallback_questions(request)
         
-        # Generate response using Gemini AI
+        # Generate response using Gemini AI with timeout
         try:
-            response = model.generate_content(prompt)
-            logger.info(f"Received response from Gemini AI: {len(response.text)} characters")
-            logger.debug(f"AI Response: {response.text[:500]}...")
+            import concurrent.futures
             
-            # Check if response is empty or too short
-            if not response.text or len(response.text.strip()) < 50:
-                logger.warning("AI response is too short or empty, using fallback")
-                return generate_fallback_questions(request)
-                
+            # Create a timeout wrapper for the AI call using concurrent.futures
+            def generate_with_timeout():
+                try:
+                    # Run the AI call directly (synchronous)
+                    response = model.generate_content(prompt)
+                    return response
+                except Exception as e:
+                    raise e
+            
+            # Execute with 15-second timeout using ThreadPoolExecutor
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(generate_with_timeout)
+                try:
+                    response = future.result(timeout=15.0)
+                    logger.info(f"Received response from Gemini AI: {len(response.text)} characters")
+                    logger.debug(f"AI Response: {response.text[:500]}...")
+                    
+                    # Check if response is empty or too short
+                    if not response.text or len(response.text.strip()) < 50:
+                        logger.warning("AI response is too short or empty, using fallback")
+                        return generate_fallback_questions(request)
+                    
+                    # Parse the response
+                    try:
+                        logger.info("Attempting to parse AI response as JSON")
+                        
+                        # Clean the response text - remove markdown formatting if present
+                        clean_text = response.text.strip()
+                        if clean_text.startswith("```json"):
+                            clean_text = clean_text[7:]
+                        if clean_text.endswith("```"):
+                            clean_text = clean_text[:-3]
+                        clean_text = clean_text.strip()
+                        
+                        logger.debug(f"Cleaned response text: {clean_text[:200]}...")
+                        
+                        questions_data = json.loads(clean_text)
+                        logger.info(f"Successfully parsed JSON with {len(questions_data)} questions")
+                        
+                        # Validate the parsed data
+                        if not isinstance(questions_data, list):
+                            logger.error("AI response is not a list, using fallback")
+                            return generate_fallback_questions(request)
+                        
+                        if len(questions_data) == 0:
+                            logger.warning("AI response contains no questions, using fallback")
+                            return generate_fallback_questions(request)
+                        
+                        questions = []
+                        for i, q_data in enumerate(questions_data):
+                            logger.debug(f"Processing question {i+1}: {q_data.get('question', 'No question text')[:50]}...")
+                            
+                            # Validate required fields
+                            required_fields = ["question", "options", "correct_answer", "explanation", "shortcut", "difficulty"]
+                            missing_fields = [field for field in required_fields if field not in q_data]
+                            if missing_fields:
+                                logger.warning(f"Question {i+1} missing fields: {missing_fields}")
+                            
+                            # Validate options
+                            options = q_data.get("options", [])
+                            if not isinstance(options, list) or len(options) != 4:
+                                logger.warning(f"Question {i+1} has invalid options: {options}")
+                                options = ["Option A", "Option B", "Option C", "Option D"]
+                            
+                            # Validate correct answer
+                            correct_answer = q_data.get("correct_answer", 0)
+                            if not isinstance(correct_answer, int) or correct_answer < 0 or correct_answer > 3:
+                                logger.warning(f"Question {i+1} has invalid correct_answer: {correct_answer}, defaulting to 0")
+                                correct_answer = 0
+                            
+                            question = Question(
+                                id=str(i + 1),
+                                question=q_data.get("question", f"Question {i+1}"),
+                                options=options,
+                                correct_answer=correct_answer,
+                                explanation=q_data.get("explanation", "Explanation not available"),
+                                shortcut=q_data.get("shortcut", "Shortcut not available"),
+                                difficulty=q_data.get("difficulty", "medium")
+                            )
+                            questions.append(question)
+                        
+                        logger.info(f"Successfully generated {len(questions)} questions")
+                        return questions
+                        
+                    except json.JSONDecodeError as json_error:
+                        logger.error(f"Failed to parse AI response as JSON: {str(json_error)}")
+                        logger.error(f"Raw AI response: {response.text}")
+                        logger.info("Falling back to manual question generation")
+                        return generate_fallback_questions(request)
+                    except Exception as parse_error:
+                        logger.error(f"Error processing AI response: {str(parse_error)}")
+                        logger.error(f"Parse error traceback: {traceback.format_exc()}")
+                        logger.info("Falling back to manual question generation")
+                        return generate_fallback_questions(request)
+                        
+                except concurrent.futures.TimeoutError:
+                    logger.error("AI model call timed out after 15 seconds")
+                    logger.info("Using fallback questions due to timeout")
+                    return generate_fallback_questions(request)
+                    
         except Exception as ai_error:
             logger.error(f"Error calling Gemini AI: {str(ai_error)}")
             logger.error(f"AI Error traceback: {traceback.format_exc()}")
             logger.info("Using fallback questions due to AI error")
-            return generate_fallback_questions(request)
-        
-        # Parse the response
-        try:
-            logger.info("Attempting to parse AI response as JSON")
-            
-            # Clean the response text - remove markdown formatting if present
-            clean_text = response.text.strip()
-            if clean_text.startswith("```json"):
-                clean_text = clean_text[7:]
-            if clean_text.endswith("```"):
-                clean_text = clean_text[:-3]
-            clean_text = clean_text.strip()
-            
-            logger.debug(f"Cleaned response text: {clean_text[:200]}...")
-            
-            questions_data = json.loads(clean_text)
-            logger.info(f"Successfully parsed JSON with {len(questions_data)} questions")
-            
-            # Validate the parsed data
-            if not isinstance(questions_data, list):
-                logger.error("AI response is not a list, using fallback")
-                return generate_fallback_questions(request)
-            
-            if len(questions_data) == 0:
-                logger.warning("AI response contains no questions, using fallback")
-                return generate_fallback_questions(request)
-            
-            questions = []
-            for i, q_data in enumerate(questions_data):
-                logger.debug(f"Processing question {i+1}: {q_data.get('question', 'No question text')[:50]}...")
-                
-                # Validate required fields
-                required_fields = ["question", "options", "correct_answer", "explanation", "shortcut", "difficulty"]
-                missing_fields = [field for field in required_fields if field not in q_data]
-                if missing_fields:
-                    logger.warning(f"Question {i+1} missing fields: {missing_fields}")
-                
-                # Validate options
-                options = q_data.get("options", [])
-                if not isinstance(options, list) or len(options) != 4:
-                    logger.warning(f"Question {i+1} has invalid options: {options}")
-                    options = ["Option A", "Option B", "Option C", "Option D"]
-                
-                # Validate correct answer
-                correct_answer = q_data.get("correct_answer", 0)
-                if not isinstance(correct_answer, int) or correct_answer < 0 or correct_answer > 3:
-                    logger.warning(f"Question {i+1} has invalid correct_answer: {correct_answer}, defaulting to 0")
-                    correct_answer = 0
-                
-                question = Question(
-                    id=str(i + 1),
-                    question=q_data.get("question", f"Question {i+1}"),
-                    options=options,
-                    correct_answer=correct_answer,
-                    explanation=q_data.get("explanation", "Explanation not available"),
-                    shortcut=q_data.get("shortcut", "Shortcut not available"),
-                    difficulty=q_data.get("difficulty", "medium")
-                )
-                questions.append(question)
-            
-            logger.info(f"Successfully generated {len(questions)} questions")
-            return questions
-            
-        except json.JSONDecodeError as json_error:
-            logger.error(f"Failed to parse AI response as JSON: {str(json_error)}")
-            logger.error(f"Raw AI response: {response.text}")
-            logger.info("Falling back to manual question generation")
-            return generate_fallback_questions(request)
-        except Exception as parse_error:
-            logger.error(f"Error processing AI response: {str(parse_error)}")
-            logger.error(f"Parse error traceback: {traceback.format_exc()}")
-            logger.info("Falling back to manual question generation")
             return generate_fallback_questions(request)
             
     except HTTPException:
@@ -663,11 +707,40 @@ async def generate_feedback(request: FeedbackRequest):
                 improvement="Review the concept and try more questions on this topic."
             )
         
-        # Generate response using Gemini AI
+        # Generate response using Gemini AI with timeout
         try:
-            response = model.generate_content(prompt)
-            logger.info(f"Received feedback response from Gemini AI: {len(response.text)} characters")
-            logger.debug(f"AI Feedback Response: {response.text[:500]}...")
+            import asyncio
+            
+            # Create a timeout wrapper for the AI call using asyncio
+            async def generate_feedback_with_timeout():
+                try:
+                    # Run the AI call in a thread pool to avoid blocking
+                    loop = asyncio.get_event_loop()
+                    response = await loop.run_in_executor(None, lambda: model.generate_content(prompt))
+                    return response
+                except Exception as e:
+                    raise e
+            
+            # Execute with 10-second timeout
+            try:
+                response = await asyncio.wait_for(generate_feedback_with_timeout(), timeout=10.0)
+                logger.info(f"Received feedback response from Gemini AI: {len(response.text)} characters")
+                logger.debug(f"AI Feedback Response: {response.text[:500]}...")
+            except asyncio.TimeoutError:
+                logger.error("AI feedback call timed out after 10 seconds")
+                logger.info("Using fallback feedback due to timeout")
+                
+                feedback_text = f"{'Your answer is correct!' if request.is_correct else 'Your answer is incorrect.'}"
+                if request.correct_answer:
+                    feedback_text += f" The correct answer is {request.correct_answer}."
+                
+                return Feedback(
+                    is_correct=request.is_correct,
+                    explanation=feedback_text,
+                    shortcut="Practice similar questions to improve your speed and accuracy.",
+                    improvement="Review the concept and try more questions on this topic."
+                )
+                
         except Exception as ai_error:
             logger.error(f"Error calling Gemini AI for feedback: {str(ai_error)}")
             logger.error(f"AI Error traceback: {traceback.format_exc()}")
@@ -1004,7 +1077,7 @@ async def create_practice_session(request: SessionRequest):
             count=10
         )
         
-        questions = await generate_questions(question_request)
+        questions = generate_questions(question_request)
         
         # Create session
         session_id = str(uuid.uuid4())
@@ -1014,7 +1087,7 @@ async def create_practice_session(request: SessionRequest):
             "topic": request.topic,
             "questions": questions,
             "start_time": datetime.now(),
-            "time_limit": 120,  # 2 minutes
+            "time_limit": 900,  # 15 minutes
             "answers": {},
             "completed": False
         }
@@ -1025,7 +1098,7 @@ async def create_practice_session(request: SessionRequest):
         return SessionResponse(
             session_id=session_id,
             questions=questions,
-            time_limit=120
+            time_limit=900
         )
         
     except Exception as e:

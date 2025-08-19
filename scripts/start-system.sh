@@ -4,12 +4,20 @@ echo "🚀 Starting PrepVista Session System"
 echo "====================================="
 
 # Check if backend is already running
-if pgrep -f "python.*main.py" > /dev/null; then
+if pgrep -f "uvicorn.*main:app" > /dev/null; then
     echo "⚠️  Backend is already running"
 else
     echo "🔧 Starting AI Backend..."
     cd ai-backend
-    python3 main.py &
+    
+    # Check if Poetry is installed
+    if ! command -v poetry &> /dev/null; then
+        echo "❌ Poetry is not installed. Please run ./scripts/setup-backend.sh first"
+        exit 1
+    fi
+    
+    # Start backend with Poetry
+    poetry run uvicorn main:app --host 0.0.0.0 --port 8000 &
     BACKEND_PID=$!
     echo "✅ AI Backend started with PID: $BACKEND_PID"
     cd ..
@@ -44,7 +52,7 @@ echo "   3. Complete a 10-question session in 2 minutes"
 echo "   4. Review results and wrong answer feedback"
 echo ""
 echo "📊 Test endpoints:"
-echo "   python3 tests/test-session.py"
+echo "   poetry run python tests/test-session.py"
 echo ""
 echo "Press Ctrl+C to stop all services"
 

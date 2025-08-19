@@ -135,7 +135,7 @@ PrepVista/
 ./scripts/start-system.sh
 
 # Option 2: Manual startup
-cd ai-backend && python3 main.py
+cd ai-backend && poetry run uvicorn main:app --reload
 cd frontend && npm run dev
 ```
 
@@ -150,13 +150,13 @@ cd frontend && npm run dev
 
 ```bash
 # Test session system
-python3 tests/test-session.py
+cd ai-backend && poetry run python ../tests/test-session.py
 
 # Test API endpoints
-python3 tests/test-api.py
+cd ai-backend && poetry run python ../tests/test-api.py
 
 # Validate setup
-python3 tests/test-setup.py
+cd ai-backend && poetry run python ../tests/test-setup.py
 ```
 
 ## 🎯 Benefits of New Structure

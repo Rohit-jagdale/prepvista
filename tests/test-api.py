@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
-Simple API testing script for Aptitude Prep backend
+Simple API testing script for PrepVista backend
 """
 
 import requests

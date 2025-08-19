@@ -15,7 +15,7 @@ The backend requires a Google Gemini AI API key to function. Follow these steps:
 2. **Create Environment File:**
 
    ```bash
-   cd backend
+   cd ai-backend
    cp env.example .env
    ```
 
@@ -25,17 +25,17 @@ The backend requires a Google Gemini AI API key to function. Follow these steps:
    GOOGLE_API_KEY=your_actual_api_key_here
    ```
 
-### 2. Install Dependencies
+### 2. Install Dependencies with Poetry
 
 ```bash
-cd backend
-pip install -r requirements.txt
+cd ai-backend
+poetry install
 ```
 
 ### 3. Start Backend Server
 
 ```bash
-python3 main.py
+poetry run uvicorn main:app --reload
 ```
 
 The backend will start on `http://localhost:8000`
@@ -45,6 +45,7 @@ The backend will start on `http://localhost:8000`
 ### 1. Install Dependencies
 
 ```bash
+cd frontend
 pnpm install
 ```
 
@@ -60,7 +61,7 @@ The frontend will start on `http://localhost:3000`
 
 The frontend is configured to connect to the backend at `http://localhost:8000`. If you need to change this:
 
-1. Edit `config/api.ts`
+1. Edit `frontend/config/api.ts`
 2. Update the `BACKEND_URL` value
 3. Restart the frontend server
 
@@ -70,16 +71,16 @@ The frontend is configured to connect to the backend at `http://localhost:8000`.
 
 If you see 500 Internal Server Error responses:
 
-1. Check that your `.env` file exists in the backend directory
+1. Check that your `.env` file exists in the ai-backend directory
 2. Verify your Google API key is correct
 3. Ensure the backend server is running on port 8000
 
 ### CORS Issues
 
-The backend is configured to allow requests from `http://localhost:3000`. If you change the frontend port, update the CORS configuration in `backend/main.py`.
+The backend is configured to allow requests from `http://localhost:3000`. If you change the frontend port, update the CORS configuration in `ai-backend/main.py`.
 
 ### API Connection Issues
 
 - Verify both frontend and backend are running
-- Check that the backend URL in `config/api.ts` matches your backend server
+- Check that the backend URL in `frontend/config/api.ts` matches your backend server
 - Ensure no firewall is blocking the connection

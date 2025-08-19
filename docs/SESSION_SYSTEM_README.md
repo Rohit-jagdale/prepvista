@@ -133,15 +133,16 @@ Score displayed → Wrong answers highlighted → Detailed feedback shown → Re
 
 ### Manual Testing
 
-1. Start backend: `cd backend && python3 main.py`
-2. Start frontend: `cd .. && npm run dev`
+1. Start backend: `cd ai-backend && poetry run uvicorn main:app --reload`
+2. Start frontend: `cd frontend && npm run dev`
 3. Navigate to practice mode
 4. Complete a full session
 
 ### Automated Testing
 
 ```bash
-python3 test-session.py
+cd ai-backend
+poetry run python ../tests/test-session.py
 ```
 
 This script tests:

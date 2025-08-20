@@ -1,0 +1,103 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { signIn, useSession } from 'next-auth/react'
+import { FcGoogle } from 'react-icons/fc'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+import UnauthGuard from '@/components/UnauthGuard'
+
+export default function SignUp() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+  const { data: session } = useSession()
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsLoading(true)
+      setError('')
+      
+      const result = await signIn('google', { 
+        callbackUrl: '/app',
+        redirect: false 
+      })
+      
+      if (result?.error) {
+        setError('Failed to sign up with Google. Please try again.')
+      } else if (result?.ok) {
+        router.push('/app')
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <UnauthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <Link 
+              href="/" 
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
+            
+            <div className="mx-auto h-12 w-12 bg-primary-600 rounded-lg flex items-center justify-center mb-4">
+              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            
+            <h2 className="text-3xl font-bold text-gray-900">
+              Create your account
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Get started with PrepVista for free
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <button
+                onClick={handleGoogleSignUp}
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <FcGoogle className="w-5 h-5 mr-2" />
+                {isLoading ? 'Creating account...' : 'Sign up with Google'}
+              </button>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link href="/auth/signin" className="font-medium text-primary-600 hover:text-primary-500">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                By signing up, you agree to our Terms of Service and Privacy Policy
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </UnauthGuard>
+  )
+}

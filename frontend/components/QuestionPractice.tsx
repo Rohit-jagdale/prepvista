@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, XCircle, Clock, Brain, Lightbulb, TrendingUp, Timer, Trophy, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Brain, Trophy, AlertCircle, RefreshCw } from 'lucide-react';
 import Header from './Header';
-import { api, SessionResponse, SessionResult, WrongAnswer } from '../lib/api';
+import { api } from '../lib/api';
 
 interface QuestionPracticeProps {
   examType: string;
@@ -18,144 +18,118 @@ interface Question {
   correct_answer: number;
   explanation: string;
   shortcut: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: string;
 }
 
 export default function QuestionPractice({ examType, topic, onBack }: QuestionPracticeProps) {
-  const [session, setSession] = useState<SessionResponse | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes instead of 2 minutes
-  const [sessionComplete, setSessionComplete] = useState(false);
-  const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-  const [timerPaused, setTimerPaused] = useState(false);
-  const [totalTimeUsed, setTotalTimeUsed] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [practiceComplete, setPracticeComplete] = useState(false);
+  const [score, setScore] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [difficulty, setDifficulty] = useState<string>('medium');
 
-  // Initialize session
+  // Initialize questions with retry mechanism
   useEffect(() => {
-    const initializeSession = async () => {
+    const generateQuestions = async () => {
       try {
         setLoading(true);
-        const sessionData = await api.createSession({
-          exam_type: examType,
-          topic: topic,
-          difficulty: 'medium'
-        });
-        setSession(sessionData);
-        // Use a more reasonable time limit: 15 minutes for 10 questions
-        setTimeLeft(900); // 15 minutes = 900 seconds
-        setQuestionStartTime(Date.now());
+        setError(null);
+        
+        // Generate 5 questions for practice
+        const questionsData = await api.generateQuestions(examType, topic, 5, difficulty);
+        
+        setQuestions(questionsData);
+        setTotalQuestions(questionsData.length);
+        setRetryCount(0); // Reset retry count on success
+        
       } catch (error) {
-        console.error('Failed to create session:', error);
-        setError('Failed to create practice session. Please try again.');
+        console.error('Failed to generate questions:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate questions.';
+        
+        if (errorMessage.includes('timed out')) {
+          setError('Question generation is taking too long. The service might be slow. Please try again.');
+        } else {
+          setError(`Failed to generate questions: ${errorMessage}`);
+        }
+        
+        // Auto-retry logic
+        if (retryCount < 2) {
+          setRetryCount(prev => prev + 1);
+          setError(`Attempt ${retryCount + 1} failed. Retrying...`);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    initializeSession();
-  }, [examType, topic]);
+    generateQuestions();
+  }, [examType, topic, difficulty, retryCount]);
 
-  // Timer countdown - only when not paused
+  // Auto-retry on failure
   useEffect(() => {
-    if (timeLeft > 0 && !sessionComplete && session && !timerPaused) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            // Time's up - show warning but don't auto-complete
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+    if (retryCount > 0 && retryCount < 3 && !loading && questions.length === 0) {
+      const retryTimer = setTimeout(() => {
+        setIsRetrying(true);
+        // Retry will be triggered by the useEffect above
+      }, 2000);
+      
+      return () => clearTimeout(retryTimer);
     }
-  }, [timeLeft, sessionComplete, session, timerPaused]);
-
-  // Track question start time
-  useEffect(() => {
-    if (session && currentQuestionIndex < session.questions.length) {
-      setQuestionStartTime(Date.now());
-    }
-  }, [currentQuestionIndex, session]);
+  }, [retryCount, loading, questions.length]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
-    // Pause timer when user is actively answering
-    setTimerPaused(true);
   };
 
-  const handleNextQuestion = async () => {
-    if (selectedAnswer === null || !session) return;
+  const handleNextQuestion = () => {
+    if (selectedAnswer === null || questions.length === 0) return;
 
-    const currentQuestion = session.questions[currentQuestionIndex];
-    const timeTaken = Math.floor((Date.now() - questionStartTime) / 1000);
+    const currentQuestion = questions[currentQuestionIndex];
     
     // Store answer locally
     setAnswers(prev => new Map(prev.set(currentQuestion.id, selectedAnswer)));
     
-    // Submit answer to backend
-    try {
-      await api.submitAnswer({
-        session_id: session.session_id,
-        question_id: currentQuestion.id,
-        selected_answer: selectedAnswer,
-        time_taken: timeTaken
-      });
-    } catch (error) {
-      console.error('Failed to submit answer:', error);
+    // Check if answer is correct
+    if (selectedAnswer === currentQuestion.correct_answer) {
+      setScore(prev => prev + 1);
     }
 
-    // Resume timer for next question
-    setTimerPaused(false);
-
-    // Move to next question or complete session
-    if (currentQuestionIndex < session.questions.length - 1) {
+    // Move to next question or complete practice
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
     } else {
-      // All questions answered - complete session
-      handleSessionComplete();
+      // All questions answered - complete practice
+      setPracticeComplete(true);
     }
   };
 
-  const handleSessionComplete = async () => {
-    if (!session) return;
-    
-    try {
-      setSessionComplete(true);
-      const result = await api.completeSession(session.session_id);
-      setSessionResult(result);
-    } catch (error) {
-      console.error('Failed to complete session:', error);
-      setError('Failed to complete session. Please try again.');
-    }
+  const handleRetry = () => {
+    setRetryCount(0);
+    setError(null);
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setAnswers(new Map());
+    setPracticeComplete(false);
+    setScore(0);
+    setLoading(true);
   };
 
-  const handleTimeUp = () => {
-    // When time runs out, show a warning but let user continue
-    if (timeLeft === 0 && !sessionComplete) {
-      // Don't auto-complete, just show warning
-      setTimerPaused(true);
-    }
-  };
-
-  // Handle time up warning
-  useEffect(() => {
-    if (timeLeft === 0 && !sessionComplete) {
-      handleTimeUp();
-    }
-  }, [timeLeft, sessionComplete]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleNewPractice = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setAnswers(new Map());
+    setPracticeComplete(false);
+    setScore(0);
+    setLoading(true);
   };
 
   if (loading) {
@@ -165,7 +139,12 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">Creating your practice session...</p>
+            <p className="text-lg text-gray-600">
+              {isRetrying ? 'Retrying...' : 'Generating your practice questions...'}
+            </p>
+            {retryCount > 0 && (
+              <p className="text-sm text-gray-500 mt-2">Attempt {retryCount + 1} of 3</p>
+            )}
           </div>
         </div>
       </div>
@@ -177,237 +156,178 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
+          <div className="text-center max-w-md mx-auto px-4">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Question Generation Failed</h2>
             <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={onBack}
-              className="btn-primary"
-            >
-              Back to Topics
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
-  }
-
-  if (sessionComplete && sessionResult) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <button
-              onClick={onBack}
-              className="flex items-center text-gray-600 hover:text-primary-600 transition-colors mb-6"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Topics
-            </button>
-
-            {/* Results Summary */}
-            <div className="card mb-8">
-              <div className="text-center mb-8">
-                <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">Session Complete!</h1>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-green-50 rounded-lg p-6">
-                    <div className="text-3xl font-bold text-green-600 mb-2">{sessionResult.correct_answers}</div>
-                    <div className="text-green-700">Correct Answers</div>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-6">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">{sessionResult.score_percentage}%</div>
-                    <div className="text-blue-700">Score</div>
-                  </div>
-                  <div className="bg-purple-50 rounded-lg p-6">
-                    <div className="text-3xl font-bold text-purple-600 mb-2">{formatTime(sessionResult.time_taken)}</div>
-                    <div className="text-purple-700">Time Taken</div>
-                  </div>
-                </div>
-
-                <div className="text-lg text-gray-600">
-                  You answered {sessionResult.correct_answers} out of {sessionResult.total_questions} questions correctly.
-                </div>
-              </div>
-            </div>
-
-            {/* Feedback on Wrong Answers */}
-            {sessionResult.wrong_answers.length > 0 && (
-              <div className="card">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Review Wrong Answers
-                </h2>
-                
-                <div className="space-y-6">
-                  {sessionResult.wrong_answers.map((wrongAnswer, index) => (
-                    <div key={wrongAnswer.question_id} className="border border-gray-200 rounded-lg p-6">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <XCircle className="w-5 h-5 text-red-500" />
-                        <span className="text-sm text-gray-500 uppercase tracking-wide">
-                          Question {index + 1}
-                        </span>
-                      </div>
-                      
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        {wrongAnswer.question}
-                      </h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="bg-red-50 rounded-lg p-3">
-                          <div className="text-sm text-red-600 font-medium mb-1">Your Answer:</div>
-                          <div className="text-red-700">{wrongAnswer.user_answer}</div>
-                        </div>
-                        <div className="bg-green-50 rounded-lg p-3">
-                          <div className="text-sm text-green-600 font-medium mb-1">Correct Answer:</div>
-                          <div className="text-green-700">{wrongAnswer.correct_answer}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-2">Explanation:</h4>
-                        <p className="text-gray-700">{wrongAnswer.explanation}</p>
-                      </div>
-                      
-                      <div className="bg-yellow-50 rounded-lg p-4">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Lightbulb className="w-5 h-5 text-yellow-600" />
-                          <h4 className="font-semibold text-gray-800">Shortcut Trick:</h4>
-                        </div>
-                        <p className="text-gray-700">{wrongAnswer.shortcut}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex justify-center mt-8">
+            <div className="space-y-3">
+              <button
+                onClick={handleRetry}
+                className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="h-5 w-5" />
+                Try Again
+              </button>
               <button
                 onClick={onBack}
-                className="btn-primary"
+                className="w-full bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center gap-2"
               >
+                <ArrowLeft className="h-5 w-5" />
                 Back to Topics
               </button>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
-  const currentQuestion = session.questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / session.questions.length) * 100;
-  const questionsAnswered = answers.size;
+  if (practiceComplete) {
+    const scorePercentage = Math.round((score / totalQuestions) * 100);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <Trophy className="h-20 w-20 text-yellow-500 mx-auto mb-6" />
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Practice Complete!</h1>
+              <p className="text-xl text-gray-600 mb-8">Great job completing the practice session</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{score}</div>
+                  <div className="text-gray-600">Correct Answers</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-600">{totalQuestions}</div>
+                  <div className="text-gray-600">Total Questions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{scorePercentage}%</div>
+                  <div className="text-gray-600">Score</div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <button
+                  onClick={handleNewPractice}
+                  className="w-full bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 transition-colors text-lg font-semibold"
+                >
+                  Practice Again
+                </button>
+                <button
+                  onClick={onBack}
+                  className="w-full bg-gray-200 text-gray-800 px-8 py-4 rounded-lg hover:bg-gray-300 transition-colors text-lg font-semibold flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  Back to Topics
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Questions Available</h2>
+            <p className="text-gray-600 mb-6">Failed to generate questions for this topic.</p>
+            <button
+              onClick={handleRetry}
+              className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <Header />
-      
-      <main className="container mx-auto px-4 py-8">
-        {/* Header and Progress */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <button
-            onClick={onBack}
-            className="flex items-center text-gray-600 hover:text-primary-600 transition-colors mb-6"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Topics
-          </button>
-          
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {topic.charAt(0).toUpperCase() + topic.slice(1)} Practice Session
-              </h1>
-              <p className="text-gray-600">
-                Question {currentQuestionIndex + 1} of {session.questions.length}
-              </p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back to Topics
+            </button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900">Practice Session</h1>
+              <p className="text-gray-600">{examType.toUpperCase()} - {topic}</p>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Timer className="w-5 h-5" />
-                <span className={`font-mono text-lg font-semibold ${
-                  timeLeft === 0 ? 'text-red-600' : timerPaused ? 'text-yellow-600' : 'text-red-600'
-                }`}>
-                  {formatTime(timeLeft)}
-                </span>
-                {timerPaused && (
-                  <span className="text-yellow-600 text-sm font-medium">(PAUSED)</span>
-                )}
-                {timeLeft === 0 && (
-                  <span className="text-red-600 text-sm font-medium">(TIME UP!)</span>
-                )}
-                {timeLeft > 0 && !timerPaused && (
-                  <button
-                    onClick={() => setTimerPaused(true)}
-                    className="ml-2 px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs rounded transition-colors"
-                  >
-                    Pause
-                  </button>
-                )}
-                {timerPaused && timeLeft > 0 && (
-                  <button
-                    onClick={() => setTimerPaused(false)}
-                    className="ml-2 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 text-xs rounded transition-colors"
-                  >
-                    Resume
-                  </button>
-                )}
-              </div>
-              <div className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
-                {questionsAnswered}/{session.questions.length} Answered
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Question</div>
+              <div className="text-lg font-semibold text-primary-600">
+                {currentQuestionIndex + 1} of {questions.length}
               </div>
             </div>
           </div>
-          
+
+          {/* Difficulty Selector */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level:</label>
+              <div className="flex gap-2">
+                {['easy', 'medium', 'hard'].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      difficulty === level
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleRetry}
+                className="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              >
+                Generate New Questions
+              </button>
+            </div>
+          </div>
+
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+          <div className="bg-gray-200 rounded-full h-2 mb-8">
+            <div
               className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             ></div>
           </div>
-          
-          {/* Time Up Warning */}
-          {timeLeft === 0 && !sessionComplete && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                  <span className="text-red-800 font-medium">Time's up! You can continue answering questions or complete the session now.</span>
-                </div>
-                <button
-                  onClick={handleSessionComplete}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Complete Session
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Question Card */}
-        <div className="max-w-4xl mx-auto">
-          <div className="card">
-            {/* Question */}
-            <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
-                <Brain className="w-5 h-5 text-primary-600" />
-                <span className="text-sm text-gray-500 uppercase tracking-wide">
-                  {currentQuestion.difficulty} difficulty
+          {/* Question Card */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="h-6 w-6 text-primary-600" />
+                <span className="text-sm font-medium text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
+                  {currentQuestion.difficulty}
                 </span>
               </div>
-              <h2 className="text-xl font-semibold text-gray-800 leading-relaxed">
+              <h2 className="text-xl font-semibold text-gray-900 leading-relaxed">
                 {currentQuestion.question}
               </h2>
             </div>
@@ -418,39 +338,60 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                 <button
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                     selectedAnswer === index
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      ? 'border-primary-600 bg-primary-50 text-primary-700'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
-                  {option}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      selectedAnswer === index
+                        ? 'border-primary-600 bg-primary-600 text-white'
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedAnswer === index && <CheckCircle className="h-4 w-4" />}
+                    </div>
+                    <span className="font-medium">{option}</span>
+                  </div>
                 </button>
               ))}
             </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between">
-              <div className="text-sm text-gray-500">
-                {questionsAnswered} of {session.questions.length} questions answered
-              </div>
-              
+            {/* Next Button */}
+            <div className="text-center">
               <button
                 onClick={handleNextQuestion}
                 disabled={selectedAnswer === null}
-                className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 ${
                   selectedAnswer === null
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
                 }`}
               >
-                {currentQuestionIndex < session.questions.length - 1 ? 'Next Question' : 'Complete Session'}
+                {isLastQuestion ? 'Complete Practice' : 'Next Question'}
               </button>
             </div>
           </div>
+
+          {/* Question Navigation */}
+          <div className="flex justify-center gap-2">
+            {questions.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentQuestionIndex(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentQuestionIndex
+                    ? 'bg-primary-600'
+                    : answers.has(questions[index].id)
+                    ? 'bg-green-500'
+                    : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

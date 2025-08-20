@@ -13,22 +13,12 @@ export const API_CONFIG = {
   
   // API endpoints
   ENDPOINTS: {
-    // Session management
-    SESSION: '/api/session',
-    SESSION_ANSWER: (id: string) => `/api/session/${id}/answer`,
-    SESSION_COMPLETE: (id: string) => `/api/session/${id}/complete`,
-    SESSION_STATUS: (id: string) => `/api/session/${id}/status`,
-    SESSIONS_STATUS: '/api/sessions/status',
-    SESSIONS_CLEANUP: '/api/sessions/cleanup',
-    
     // Question generation
     QUESTIONS: '/api/questions',
-    FEEDBACK: '/api/feedback',
     
     // System health
     HEALTH: '/health',
     MODEL_INFO: '/model-info',
-    TEST_AI: '/test-ai',
   },
   
   // Request configuration

@@ -91,12 +91,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">Loading exam types...</p>
+            <p className="text-lg text-gray-600 dark:text-gray-400">Loading exam types...</p>
           </div>
         </div>
       </div>
@@ -104,15 +104,15 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
       
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Welcome to Your Dashboard
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Choose your exam type and start practicing with AI-powered questions tailored to your preparation needs.
           </p>
         </div>
@@ -129,11 +129,11 @@ export default function Dashboard() {
                   <exam.icon className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{exam.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exam.name}</h3>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">{exam.description}</p>
-              <div className="flex items-center text-primary-600 font-medium group-hover:text-primary-700">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{exam.description}</p>
+              <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
                 Start Practice
                 <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

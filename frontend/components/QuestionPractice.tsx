@@ -134,16 +134,16 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
               {isRetrying ? 'Retrying...' : 'Generating your practice questions...'}
             </p>
             {retryCount > 0 && (
-              <p className="text-sm text-gray-500 mt-2">Attempt {retryCount + 1} of 3</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Attempt {retryCount + 1} of 3</p>
             )}
           </div>
         </div>
@@ -153,13 +153,13 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto px-4">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Question Generation Failed</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Question Generation Failed</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
             <div className="space-y-3">
               <button
                 onClick={handleRetry}
@@ -170,7 +170,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
               </button>
               <button
                 onClick={onBack}
-                className="w-full bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="h-5 w-5" />
                 Back to Topics
@@ -186,27 +186,27 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
     const scorePercentage = Math.round((score / totalQuestions) * 100);
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
               <Trophy className="h-20 w-20 text-yellow-500 mx-auto mb-6" />
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Practice Complete!</h1>
-              <p className="text-xl text-gray-600 mb-8">Great job completing the practice session</p>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Practice Complete!</h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">Great job completing the practice session</p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{score}</div>
-                  <div className="text-gray-600">Correct Answers</div>
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{score}</div>
+                  <div className="text-gray-600 dark:text-gray-300">Correct Answers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-600">{totalQuestions}</div>
-                  <div className="text-gray-600">Total Questions</div>
+                  <div className="text-3xl font-bold text-gray-600 dark:text-gray-300">{totalQuestions}</div>
+                  <div className="text-gray-600 dark:text-gray-300">Total Questions</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">{scorePercentage}%</div>
-                  <div className="text-gray-600">Score</div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400">{scorePercentage}%</div>
+                  <div className="text-gray-600 dark:text-gray-300">Score</div>
                 </div>
               </div>
 
@@ -219,7 +219,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                 </button>
                 <button
                   onClick={onBack}
-                  className="w-full bg-gray-200 text-gray-800 px-8 py-4 rounded-lg hover:bg-gray-300 transition-colors text-lg font-semibold flex items-center justify-center gap-2"
+                  className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-lg font-semibold flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="h-5 w-5" />
                   Back to Topics
@@ -234,13 +234,13 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
   if (!questions || questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Questions Available</h2>
-            <p className="text-gray-600 mb-6">Failed to generate questions for this topic.</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Questions Available</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">Failed to generate questions for this topic.</p>
             <button
               onClick={handleRetry}
               className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
@@ -257,7 +257,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -265,18 +265,18 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
           <div className="flex items-center justify-between mb-8">
             <button
               onClick={onBack}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
               Back to Topics
             </button>
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">Practice Session</h1>
-              <p className="text-gray-600">{examType.toUpperCase()} - {topic}</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Practice Session</h1>
+              <p className="text-gray-600 dark:text-gray-300">{examType.toUpperCase()} - {topic}</p>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-500">Question</div>
-              <div className="text-lg font-semibold text-primary-600">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Question</div>
+              <div className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                 {currentQuestionIndex + 1} of {questions.length}
               </div>
             </div>
@@ -284,8 +284,8 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
 
           {/* Difficulty Selector */}
           <div className="flex justify-center mb-6">
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level:</label>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty Level:</label>
               <div className="flex gap-2">
                 {['easy', 'medium', 'hard'].map((level) => (
                   <button
@@ -294,7 +294,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       difficulty === level
                         ? 'bg-primary-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
                   >
                     {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -311,7 +311,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-gray-200 rounded-full h-2 mb-8">
+          <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8">
             <div
               className="bg-primary-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
@@ -319,15 +319,15 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
           </div>
 
           {/* Question Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
-                <Brain className="h-6 w-6 text-primary-600" />
-                <span className="text-sm font-medium text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
+                <Brain className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                <span className="text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-3 py-1 rounded-full">
                   {currentQuestion.difficulty}
                 </span>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 leading-relaxed">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white leading-relaxed">
                 {currentQuestion.question}
               </h2>
             </div>
@@ -340,15 +340,15 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                   onClick={() => handleAnswerSelect(index)}
                   className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                     selectedAnswer === index
-                      ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                       selectedAnswer === index
                         ? 'border-primary-600 bg-primary-600 text-white'
-                        : 'border-gray-300'
+                        : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {selectedAnswer === index && <CheckCircle className="h-4 w-4" />}
                     </div>
@@ -365,7 +365,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                 disabled={selectedAnswer === null}
                 className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 ${
                   selectedAnswer === null
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
                 }`}
               >
@@ -385,7 +385,7 @@ export default function QuestionPractice({ examType, topic, onBack }: QuestionPr
                     ? 'bg-primary-600'
                     : answers.has(questions[index].id)
                     ? 'bg-green-500'
-                    : 'bg-gray-300'
+                    : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               />
             ))}

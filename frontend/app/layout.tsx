@@ -6,7 +6,7 @@ import Providers from '@/components/Providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Aptitude Prep - AI-Powered Exam Preparation',
+  title: 'PrepVista - AI-Powered Exam Preparation',
   description: 'Prepare for UPSC, MPSC, College Placements, IBPS and more with AI-powered aptitude questions and personalized feedback.',
 };
 
@@ -19,9 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Providers>
-          <div className="min-h-screen">
-            {children}
-          </div>
+          {children}
         </Providers>
       </body>
     </html>

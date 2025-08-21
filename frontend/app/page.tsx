@@ -183,21 +183,21 @@ export default function LandingPage() {
             Prepare for UPSC, MPSC, College Placements, IBPS, SSC, CAT and more with intelligent questions, 
             personalized feedback, and comprehensive progress tracking.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {isAuthenticated ? (
-              <Link href="/app" className="btn-primary text-lg px-8 py-4">
-                Go to Dashboard
+              <Link href="/app" className="btn-primary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
+                <span>Go to Dashboard</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             ) : (
-              <Link href="/auth/signup" className="btn-primary text-lg px-8 py-4">
-                Start Free Trial
+              <Link href="/auth/signup" className="btn-primary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
+                <span>Start Free Trial</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             )}
-            <button className="btn-secondary text-lg px-8 py-4">
+            <button className="btn-secondary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
               <Play className="w-5 h-5 mr-2" />
-              Watch Demo
+              <span>Watch Demo</span>
             </button>
           </div>
         </div>
@@ -320,21 +320,21 @@ export default function LandingPage() {
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
             Join thousands of aspirants who are already using PrepVista to ace their exams.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {isAuthenticated ? (
-              <Link href="/app" className="btn-primary text-lg px-8 py-4">
-                Go to Dashboard
+              <Link href="/app" className="btn-primary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
+                <span>Go to Dashboard</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             ) : (
-              <Link href="/auth/signup" className="btn-primary text-lg px-8 py-4">
-                Start Your Free Trial
+              <Link href="/auth/signup" className="btn-primary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
+                <span>Start Your Free Trial</span>
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             )}
             {!isAuthenticated && (
-              <Link href="/auth/signin" className="btn-secondary text-lg px-8 py-4">
-                Sign In to Continue
+              <Link href="/auth/signin" className="btn-secondary text-lg px-8 py-4 flex items-center justify-center min-w-[200px]">
+                <span>Sign In to Continue</span>
               </Link>
             )}
           </div>

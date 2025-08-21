@@ -104,12 +104,12 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">Loading topics...</p>
+            <p className="text-lg text-gray-600 dark:text-gray-300">Loading topics...</p>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
       
       <main className="container mx-auto px-4 py-12">
@@ -125,17 +125,17 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
         <div className="max-w-6xl mx-auto mb-12">
           <button
             onClick={onBack}
-            className="flex items-center text-gray-600 hover:text-primary-600 transition-colors mb-6"
+            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors mb-6"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Exam Selection
           </button>
           
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {examNames[examType as keyof typeof examNames]} Preparation
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Choose a topic to start practicing with AI-generated questions and get personalized feedback
             </p>
           </div>
@@ -151,18 +151,18 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
                 className="card hover:shadow-lg transition-all duration-300 cursor-pointer group hover:-translate-y-1"
               >
                 <div className="flex items-center space-x-4 mb-4">
-                  <div className="p-3 bg-primary-100 rounded-lg text-primary-600">
+                  <div className="p-3 bg-primary-100 dark:bg-primary-900 rounded-lg text-primary-600 dark:text-primary-400">
                     <topic.icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 group-hover:text-primary-600">
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
                     {topic.name}
                   </h3>
                 </div>
-                <p className="text-gray-600 leading-relaxed mb-4">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
                   {topic.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
                       15-20 min
@@ -172,7 +172,7 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
                       10 questions
                     </span>
                   </div>
-                  <div className="flex items-center text-primary-600 font-medium">
+                  <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium">
                     <span>Start Practice</span>
                     <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -187,19 +187,19 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
         {/* Progress Overview */}
         <div className="mt-16 max-w-4xl mx-auto">
           <div className="card">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Progress Overview</h3>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Your Progress Overview</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600 mb-2">0</div>
-                <div className="text-sm text-gray-600">Topics Completed</div>
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">0</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Topics Completed</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600 mb-2">0</div>
-                <div className="text-sm text-gray-600">Questions Solved</div>
+              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">0</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Questions Solved</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600 mb-2">0%</div>
-                <div className="text-sm text-gray-600">Accuracy Rate</div>
+              <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-2">0%</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Accuracy Rate</div>
               </div>
             </div>
           </div>

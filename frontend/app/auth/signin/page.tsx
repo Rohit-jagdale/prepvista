@@ -7,6 +7,7 @@ import { FcGoogle } from 'react-icons/fc'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import UnauthGuard from '@/components/UnauthGuard'
+import Logo from '@/components/Logo'
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
@@ -50,9 +51,7 @@ export default function SignIn() {
             </Link>
             
             <div className="mx-auto h-12 w-12 bg-primary-600 rounded-lg flex items-center justify-center mb-4">
-              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+              <Logo size="sm" showText={false} showSubtitle={false} />
             </div>
             
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">

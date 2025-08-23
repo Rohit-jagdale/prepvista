@@ -3,7 +3,6 @@
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { 
-  Brain, 
   BookOpen, 
   Target, 
   TrendingUp, 
@@ -21,10 +20,12 @@ import {
   Moon
 } from 'lucide-react';
 import Link from 'next/link';
+import LogoSpinner from '@/components/LogoSpinner';
+import Logo from '@/components/Logo';
 
 const features = [
   {
-    icon: Brain,
+    icon: Zap,
     title: 'AI-Powered Questions',
     description: 'Intelligent question generation tailored to your exam type and difficulty level'
   },
@@ -39,7 +40,7 @@ const features = [
     description: 'Practice with timed sessions to improve your speed and accuracy'
   },
   {
-    icon: Zap,
+    icon: BookOpen,
     title: 'Instant Feedback',
     description: 'Get immediate explanations and shortcuts for every question'
   }
@@ -110,10 +111,7 @@ export default function LandingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
+        <LogoSpinner size="lg" text="Loading..." />
       </div>
     );
   }
@@ -125,13 +123,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">PrepVista</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">AI-Powered Learning Platform</p>
-              </div>
+              <Logo />
             </div>
             
             <div className="flex items-center space-x-4">
@@ -347,10 +339,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">PrepVista</span>
+                <Logo size="sm" showSubtitle={false} />
               </div>
               <p className="text-gray-400">
                 AI-powered exam preparation platform helping aspirants achieve their dreams.

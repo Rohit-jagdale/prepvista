@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Brain, BookOpen, User, LogOut, ChevronDown, Home, BarChart3, Sun, Moon } from 'lucide-react'
+import { BookOpen, User, LogOut, ChevronDown, Home, BarChart3, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { useTheme } from '@/lib/theme'
 import Link from 'next/link'
+import Logo from './Logo'
 
 export default function Header() {
   const { user, isAuthenticated, signOut } = useAuth()
@@ -30,13 +31,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Link href="/app" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">PrepVista</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">AI-Powered Learning Platform</p>
-              </div>
+              <Logo />
             </Link>
           </div>
           

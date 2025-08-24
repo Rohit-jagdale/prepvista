@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme';
 import { 
   BookOpen, 

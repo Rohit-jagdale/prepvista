@@ -1,7 +1,7 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
-import { AuthProvider } from '@/lib/auth'
+import { AuthProvider } from '@/lib/auth-context'
 import { ThemeProvider } from '@/lib/theme'
 
 export default function Providers({ children }: { children: React.ReactNode }) {

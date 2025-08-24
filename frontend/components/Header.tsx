@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { BookOpen, User, LogOut, ChevronDown, Home, BarChart3, Sun, Moon } from 'lucide-react'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme'
 import Link from 'next/link'
 import Logo from './Logo'

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false, // Disable StrictMode to prevent double mounting
   async rewrites() {
     return [
       {

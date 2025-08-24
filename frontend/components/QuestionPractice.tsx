@@ -19,7 +19,7 @@ interface QuestionPracticeProps {
   examType: string;
   topic: string;
   onBack: () => void;
-  onComplete: (score: number, totalQuestions: number, wrongAnswers: WrongAnswer[]) => void;
+  onComplete: (score: number, totalQuestions: number, wrongAnswers: WrongAnswer[], sessionTime: number) => void;
 }
 
 interface Question {
@@ -46,6 +46,7 @@ export default function QuestionPractice({ examType, topic, onBack, onComplete }
   const [difficulty, setDifficulty] = useState<string>('');
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswer[]>([]);
   const [showDifficultyModal, setShowDifficultyModal] = useState(true);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(0);
 
   // Generate questions function
   const generateQuestions = async (selectedDifficulty: string) => {
@@ -61,6 +62,7 @@ export default function QuestionPractice({ examType, topic, onBack, onComplete }
       setTotalQuestions(questionsData.length);
       setRetryCount(0); // Reset retry count on success
       setShowDifficultyModal(false);
+      setSessionStartTime(Date.now()); // Start timing the session
       
     } catch (error) {
       console.error('Failed to generate questions:', error);
@@ -139,7 +141,9 @@ export default function QuestionPractice({ examType, topic, onBack, onComplete }
           }]
         : wrongAnswers;
       
-      onComplete(finalScore, questions.length, finalWrongAnswers);
+      // Calculate session time
+      const sessionTime = Math.floor((Date.now() - sessionStartTime) / 1000); // in seconds
+      onComplete(finalScore, questions.length, finalWrongAnswers, sessionTime);
     }
   };
 

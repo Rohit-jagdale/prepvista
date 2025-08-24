@@ -18,6 +18,7 @@ interface PracticeData {
   score: number;
   totalQuestions: number;
   wrongAnswers: WrongAnswer[];
+  sessionTime: number;
 }
 
 interface WrongAnswer {
@@ -81,6 +82,7 @@ export default function PracticePage() {
     score: 0,
     totalQuestions: 0,
     wrongAnswers: [],
+    sessionTime: 0,
   });
   const [examTypesList, setExamTypesList] = useState(examTypes);
   const [loading, setLoading] = useState(true);
@@ -124,29 +126,29 @@ export default function PracticePage() {
     setCurrentState('question-practice');
   };
 
-  const handlePracticeComplete = (score: number, totalQuestions: number, wrongAnswers: WrongAnswer[]) => {
-    setPracticeData(prev => ({ ...prev, score, totalQuestions, wrongAnswers }));
+  const handlePracticeComplete = (score: number, totalQuestions: number, wrongAnswers: WrongAnswer[], sessionTime: number) => {
+    setPracticeData(prev => ({ ...prev, score, totalQuestions, wrongAnswers, sessionTime }));
     setCurrentState('completion');
   };
 
   const handleBackToExamSelection = () => {
     setCurrentState('exam-selection');
-    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] });
+    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [], sessionTime: 0 });
   };
 
   const handleBackToTopicSelection = () => {
     setCurrentState('topic-selection');
-    setPracticeData(prev => ({ ...prev, topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] }));
+    setPracticeData(prev => ({ ...prev, topic: '', score: 0, totalQuestions: 0, wrongAnswers: [], sessionTime: 0 }));
   };
 
   const handlePracticeAgain = () => {
     setCurrentState('question-practice');
-    setPracticeData(prev => ({ ...prev, score: 0, totalQuestions: 0, wrongAnswers: [] }));
+    setPracticeData(prev => ({ ...prev, score: 0, totalQuestions: 0, wrongAnswers: [], sessionTime: 0 }));
   };
 
   const handleBackToDashboard = () => {
     setCurrentState('exam-selection');
-    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] });
+    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [], sessionTime: 0 });
   };
 
   if (loading) {
@@ -229,6 +231,9 @@ export default function PracticePage() {
           score={practiceData.score}
           totalQuestions={practiceData.totalQuestions}
           wrongAnswers={practiceData.wrongAnswers}
+          sessionTime={practiceData.sessionTime}
+          examType={practiceData.examType}
+          topic={practiceData.topic}
           onPracticeAgain={handlePracticeAgain}
           onBack={handleBackToTopicSelection}
           onBackToDashboard={handleBackToDashboard}

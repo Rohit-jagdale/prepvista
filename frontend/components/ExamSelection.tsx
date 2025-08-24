@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Calculator, Percent, Clock, TrendingUp, BookOpen, Target } from 'lucide-react';
 import QuestionPractice from './QuestionPractice';
 import Header from './Header';
-import LogoSpinner from './LogoSpinner';
+import GlobalLoading from './GlobalLoading';
 import { api } from '../lib/api';
 
 interface ExamSelectionProps {
   examType: string;
   onBack: () => void;
+  onTopicSelect: (topic: string) => void;
 }
 
 const examTopics = {
@@ -60,8 +61,7 @@ const examNames = {
   cat: 'CAT',
 };
 
-export default function ExamSelection({ examType, onBack }: ExamSelectionProps) {
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+export default function ExamSelection({ examType, onBack, onTopicSelect }: ExamSelectionProps) {
   const [topics, setTopics] = useState<Array<{id: string, name: string, icon: any, description: string}>>([]);
   const [loading, setLoading] = useState(true);
   
@@ -93,23 +93,13 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
     loadTopics();
   }, [examType]);
 
-  if (selectedTopic) {
-    return (
-      <QuestionPractice 
-        examType={examType}
-        topic={selectedTopic}
-        onBack={() => setSelectedTopic(null)}
-      />
-    );
-  }
+
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
-        <div className="flex items-center justify-center min-h-screen">
-          <LogoSpinner size="lg" text="Loading topics..." />
-        </div>
+        <GlobalLoading text="Loading topics..." size="lg" fullScreen={false} />
       </div>
     );
   }
@@ -145,7 +135,7 @@ export default function ExamSelection({ examType, onBack }: ExamSelectionProps) 
             {topics.map((topic) => (
               <div
                 key={topic.id}
-                onClick={() => setSelectedTopic(topic.id)}
+                onClick={() => onTopicSelect(topic.id)}
                 className="card hover:shadow-lg transition-all duration-300 cursor-pointer group hover:-translate-y-1"
               >
                 <div className="flex items-center space-x-4 mb-4">

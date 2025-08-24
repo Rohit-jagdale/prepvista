@@ -20,7 +20,7 @@ import {
   Moon
 } from 'lucide-react';
 import Link from 'next/link';
-import LogoSpinner from '@/components/LogoSpinner';
+import GlobalLoading from '@/components/GlobalLoading';
 import Logo from '@/components/Logo';
 
 const features = [
@@ -110,8 +110,8 @@ export default function LandingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <LogoSpinner size="lg" text="Loading..." />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <GlobalLoading text="Loading..." size="lg" fullScreen={true} />
       </div>
     );
   }

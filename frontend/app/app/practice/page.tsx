@@ -1,9 +1,32 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { BookOpen, Target, TrendingUp, Award, Users, Building2, Play, Clock, BarChart3 } from 'lucide-react'
-import Header from '@/components/Header'
-import Link from 'next/link'
+import { useState, useEffect } from 'react';
+import { BookOpen, Target, TrendingUp, Award, Users, Building2, ArrowLeft } from 'lucide-react';
+import ExamSelection from '@/components/ExamSelection';
+import QuestionPractice from '@/components/QuestionPractice';
+import PracticeCompletion from '@/components/PracticeCompletion';
+import Header from '@/components/Header';
+import GlobalLoading from '@/components/GlobalLoading';
+import { api } from '@/lib/api';
+
+// Practice flow states
+type PracticeState = 'exam-selection' | 'topic-selection' | 'question-practice' | 'completion';
+
+interface PracticeData {
+  examType: string;
+  topic: string;
+  score: number;
+  totalQuestions: number;
+  wrongAnswers: WrongAnswer[];
+}
+
+interface WrongAnswer {
+  question: string;
+  userAnswer: string;
+  correctAnswer: string;
+  explanation: string;
+  shortcut: string;
+}
 
 const examTypes = [
   {
@@ -12,7 +35,6 @@ const examTypes = [
     description: 'Union Public Service Commission - Civil Services Examination',
     icon: Award,
     color: 'bg-blue-500',
-    topics: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Knowledge']
   },
   {
     id: 'mpsc',
@@ -20,7 +42,6 @@ const examTypes = [
     description: 'Maharashtra Public Service Commission',
     icon: Building2,
     color: 'bg-green-500',
-    topics: ['General Studies', 'Aptitude', 'Marathi Language', 'English']
   },
   {
     id: 'college-placements',
@@ -28,7 +49,6 @@ const examTypes = [
     description: 'Campus recruitment aptitude tests',
     icon: Users,
     color: 'bg-purple-500',
-    topics: ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability', 'Data Interpretation']
   },
   {
     id: 'ibps',
@@ -36,7 +56,6 @@ const examTypes = [
     description: 'Institute of Banking Personnel Selection',
     icon: Target,
     color: 'bg-orange-500',
-    topics: ['Reasoning', 'English', 'Quantitative Aptitude', 'General Awareness']
   },
   {
     id: 'ssc',
@@ -44,7 +63,6 @@ const examTypes = [
     description: 'Staff Selection Commission',
     icon: TrendingUp,
     color: 'bg-red-500',
-    topics: ['General Intelligence', 'General Knowledge', 'Quantitative Aptitude', 'English']
   },
   {
     id: 'cat',
@@ -52,139 +70,172 @@ const examTypes = [
     description: 'Common Admission Test for MBA',
     icon: BookOpen,
     color: 'bg-indigo-500',
-    topics: ['Quantitative Aptitude', 'Verbal Ability', 'Data Interpretation', 'Logical Reasoning']
-  }
-]
+  },
+];
 
 export default function PracticePage() {
-  const [selectedExam, setSelectedExam] = useState<string | null>(null)
+  const [currentState, setCurrentState] = useState<PracticeState>('exam-selection');
+  const [practiceData, setPracticeData] = useState<PracticeData>({
+    examType: '',
+    topic: '',
+    score: 0,
+    totalQuestions: 0,
+    wrongAnswers: [],
+  });
+  const [examTypesList, setExamTypesList] = useState(examTypes);
+  const [loading, setLoading] = useState(true);
 
-  if (selectedExam) {
-    const exam = examTypes.find(e => e.id === selectedExam)
+  // Load exam types from API
+  useEffect(() => {
+    const loadExamTypes = async () => {
+      try {
+        const apiExamTypes = await api.getExamTypes();
+        // Map API exam types to UI format
+        const mappedExamTypes = apiExamTypes.exam_types.map((examId: string) => {
+          const staticExam = examTypes.find(e => e.id === examId);
+          return staticExam || {
+            id: examId,
+            name: examId.charAt(0).toUpperCase() + examId.slice(1).replace('-', ' '),
+            description: `${examId} examination preparation`,
+            icon: BookOpen,
+            color: 'bg-gray-500',
+          };
+        });
+        setExamTypesList(mappedExamTypes);
+      } catch (error) {
+        console.error('Failed to load exam types from API:', error);
+        // Fallback to static exam types
+        setExamTypesList(examTypes);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadExamTypes();
+  }, []);
+
+  const handleExamSelect = (examType: string) => {
+    setPracticeData(prev => ({ ...prev, examType }));
+    setCurrentState('topic-selection');
+  };
+
+  const handleTopicSelect = (topic: string) => {
+    setPracticeData(prev => ({ ...prev, topic }));
+    setCurrentState('question-practice');
+  };
+
+  const handlePracticeComplete = (score: number, totalQuestions: number, wrongAnswers: WrongAnswer[]) => {
+    setPracticeData(prev => ({ ...prev, score, totalQuestions, wrongAnswers }));
+    setCurrentState('completion');
+  };
+
+  const handleBackToExamSelection = () => {
+    setCurrentState('exam-selection');
+    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] });
+  };
+
+  const handleBackToTopicSelection = () => {
+    setCurrentState('topic-selection');
+    setPracticeData(prev => ({ ...prev, topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] }));
+  };
+
+  const handlePracticeAgain = () => {
+    setCurrentState('question-practice');
+    setPracticeData(prev => ({ ...prev, score: 0, totalQuestions: 0, wrongAnswers: [] }));
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentState('exam-selection');
+    setPracticeData({ examType: '', topic: '', score: 0, totalQuestions: 0, wrongAnswers: [] });
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Header />
-        
-        <main className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <button 
-              onClick={() => setSelectedExam(null)}
-              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Exam Types
-            </button>
-            
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {exam?.name} Practice
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">{exam?.description}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {exam?.topics.map((topic, index) => (
-              <div key={index} className="card hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{topic}</h3>
-                  <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  </div>
-                </div>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Questions Available</span>
-                    <span className="font-medium">150+</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Difficulty Levels</span>
-                    <span className="font-medium">Easy, Medium, Hard</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Time per Question</span>
-                    <span className="font-medium">2-3 min</span>
-                  </div>
-                </div>
-
-                <div className="flex space-x-3">
-                  <Link 
-                    href={`/app/practice/${selectedExam}/${topic.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="btn-primary flex-1 text-center"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Practice
-                  </Link>
-                  <button className="btn-secondary">
-                    <BarChart3 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
+        <GlobalLoading text="Loading exam types..." size="lg" fullScreen={false} />
       </div>
-    )
+    );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Choose Your Practice Area
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Select an exam type and topic to start practicing with AI-powered questions tailored to your needs.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {examTypes.map((exam) => (
-            <div
-              key={exam.id}
-              className="card hover:shadow-lg transition-all duration-300 cursor-pointer group"
-              onClick={() => setSelectedExam(exam.id)}
-            >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className={`w-12 h-12 ${exam.color} rounded-lg flex items-center justify-center`}>
-                  <exam.icon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exam.name}</h3>
-                </div>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{exam.description}</p>
-              
-              <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Topics covered:</p>
-                <div className="flex flex-wrap gap-1">
-                  {exam.topics.slice(0, 3).map((topic, index) => (
-                    <span key={index} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">
-                      {topic}
-                    </span>
-                  ))}
-                  {exam.topics.length > 3 && (
-                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">
-                      +{exam.topics.length - 3} more
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
-                Start Practice
-                <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
+  // Render different components based on current state
+  switch (currentState) {
+    case 'exam-selection':
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <Header />
+          
+          <main className="container mx-auto px-4 py-8">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Choose Your Exam Type
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Select the exam you're preparing for to get started with AI-powered practice questions
+              </p>
             </div>
-          ))}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {examTypesList.map((exam) => (
+                <div
+                  key={exam.id}
+                  className="card hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                  onClick={() => handleExamSelect(exam.id)}
+                >
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className={`w-12 h-12 ${exam.color} rounded-lg flex items-center justify-center`}>
+                      <exam.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exam.name}</h3>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">{exam.description}</p>
+                  <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
+                    Start Practice
+                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
         </div>
-      </main>
-    </div>
-  )
+      );
+
+    case 'topic-selection':
+      return (
+        <ExamSelection 
+          examType={practiceData.examType} 
+          onBack={handleBackToExamSelection}
+          onTopicSelect={handleTopicSelect}
+        />
+      );
+
+    case 'question-practice':
+      return (
+        <QuestionPractice 
+          examType={practiceData.examType}
+          topic={practiceData.topic}
+          onBack={handleBackToTopicSelection}
+          onComplete={handlePracticeComplete}
+        />
+      );
+
+    case 'completion':
+      return (
+        <PracticeCompletion
+          score={practiceData.score}
+          totalQuestions={practiceData.totalQuestions}
+          wrongAnswers={practiceData.wrongAnswers}
+          onPracticeAgain={handlePracticeAgain}
+          onBack={handleBackToTopicSelection}
+          onBackToDashboard={handleBackToDashboard}
+        />
+      );
+
+    default:
+      return null;
+  }
 }

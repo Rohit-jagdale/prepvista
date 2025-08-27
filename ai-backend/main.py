@@ -48,6 +48,29 @@ class QuestionRequest(BaseModel):
     difficulty: str
     count: int
 
+# New models for AI Agents
+class AIQuestionRequest(BaseModel):
+    agent_id: str
+    subject: str
+    question_types: List[str]
+    question_count: int
+    difficulty: str
+    document_content: str
+
+class AIQuestion(BaseModel):
+    id: str
+    type: str
+    question: str
+    options: Optional[List[str]] = None
+    correct_answer: Optional[str] = None
+    explanation: Optional[str] = None
+    expected_answer: Optional[str] = None
+    key_points: Optional[List[str]] = None
+    evaluation_criteria: Optional[List[str]] = None
+    central_concept: Optional[str] = None
+    expected_branches: Optional[List[str]] = None
+    difficulty: str
+
 # Session-related classes removed
 
 # Feedback classes removed - focusing on question generation only
@@ -246,6 +269,170 @@ Keep explanations concise. Focus on accuracy."""
     logger.error("All retry attempts failed")
     raise Exception("AI service temporarily unavailable. Please try again later.")
 
+async def generate_ai_agent_questions(request: AIQuestionRequest) -> List[AIQuestion]:
+    """Generate questions for AI agents based on document content"""
+    if not ai_model or not ai_initialized:
+        logger.error("AI model not available or not initialized")
+        raise Exception("AI model not available")
+    
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Attempt {attempt + 1}/{max_retries} to generate AI agent questions")
+            
+            # Create a comprehensive prompt for different question types
+            question_type_instructions = []
+            for q_type in request.question_types:
+                if q_type.upper() == "MCQ":
+                    question_type_instructions.append("Multiple Choice Questions (MCQ) with 4 options and correct answer")
+                elif q_type.upper() == "OBJECTIVE":
+                    question_type_instructions.append("Objective questions (True/False, Fill in the blank)")
+                elif q_type.upper() == "SHORT_ANSWER":
+                    question_type_instructions.append("Short answer questions with expected answer and key points")
+                elif q_type.upper() == "ESSAY":
+                    question_type_instructions.append("Essay questions with evaluation criteria")
+                elif q_type.upper() == "MINDMAP":
+                    question_type_instructions.append("Mind map questions with central concept and expected branches")
+            
+            prompt = f"""You are an expert educator creating questions based on the following document content for {request.subject}.
+
+Document Content:
+{request.document_content[:2000]}...
+
+Generate {request.question_count} {request.difficulty} questions based on this content. Include these question types: {', '.join(question_type_instructions)}.
+
+Format as JSON array with questions matching their type:
+
+For MCQ questions:
+{{
+    "type": "mcq",
+    "question": "question text",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_answer": "Option A",
+    "explanation": "brief explanation",
+    "difficulty": "{request.difficulty}"
+}}
+
+For Objective questions:
+{{
+    "type": "objective",
+    "question": "question text",
+    "correct_answer": "correct answer",
+    "explanation": "brief explanation",
+    "difficulty": "{request.difficulty}"
+}}
+
+For Short Answer questions:
+{{
+    "type": "short-answer",
+    "question": "question text",
+    "expected_answer": "expected answer",
+    "key_points": ["key point 1", "key point 2"],
+    "difficulty": "{request.difficulty}"
+}}
+
+For Essay questions:
+{{
+    "type": "essay",
+    "question": "question text",
+    "expected_answer": "detailed expected answer",
+    "evaluation_criteria": ["criteria 1", "criteria 2"],
+    "difficulty": "{request.difficulty}"
+}}
+
+For Mind Map questions:
+{{
+    "type": "mindmap",
+    "question": "Create a mind map for: [concept]",
+    "central_concept": "central concept",
+    "expected_branches": ["branch 1", "branch 2"],
+    "difficulty": "{request.difficulty}"
+}}
+
+Ensure all questions are directly related to the document content. Return only valid JSON."""
+            
+            logger.info(f"Sending AI agent prompt to AI: {prompt[:200]}...")
+            
+            # Execute AI call with timeout
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(lambda: ai_model.generate_content(prompt))
+                response = await loop.run_in_executor(None, lambda: future.result(timeout=AI_TIMEOUT))
+            
+            logger.info(f"AI response received: {response.text[:200] if response.text else 'No text'}...")
+            
+            if not response.text:
+                logger.error("AI response has no text content")
+                continue  # Try again
+            
+            # Parse response
+            try:
+                # Clean response
+                text = response.text.strip()
+                if text.startswith("```json"):
+                    text = text[7:]
+                if text.endswith("```"):
+                    text = text[:-3]
+                text = text.strip()
+                
+                logger.info(f"Cleaned response text: {text[:200]}...")
+                
+                data = json.loads(text)
+                if not isinstance(data, list):
+                    logger.error(f"AI response is not a list, got: {type(data)}")
+                    continue  # Try again
+                
+                logger.info(f"Parsed {len(data)} questions from AI response")
+                
+                questions = []
+                for i, q_data in enumerate(data[:request.question_count]):
+                    try:
+                        question = AIQuestion(
+                            id=str(i + 1),
+                            type=q_data.get("type", "mcq").lower(),
+                            question=q_data.get("question", f"Question {i+1}"),
+                            options=q_data.get("options", []),
+                            correct_answer=q_data.get("correct_answer", ""),
+                            explanation=q_data.get("explanation", ""),
+                            expected_answer=q_data.get("expected_answer", ""),
+                            key_points=q_data.get("key_points", []),
+                            evaluation_criteria=q_data.get("evaluation_criteria", []),
+                            central_concept=q_data.get("central_concept", ""),
+                            expected_branches=q_data.get("expected_branches", []),
+                            difficulty=q_data.get("difficulty", request.difficulty)
+                        )
+                        questions.append(question)
+                        logger.info(f"Successfully parsed AI agent question {i+1}")
+                    except Exception as e:
+                        logger.warning(f"Failed to parse AI agent question {i+1}: {e}")
+                        continue
+                
+                logger.info(f"Successfully created {len(questions)} AIQuestion objects")
+                return questions
+                            
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse AI response as JSON: {e}")
+                logger.error(f"Raw response text: {response.text}")
+                continue  # Try again
+                
+        except Exception as e:
+            logger.error(f"AI agent question generation attempt {attempt + 1} failed: {str(e)}")
+            if attempt < max_retries - 1:  # Not the last attempt
+                logger.info(f"Retrying in 2 seconds...")
+                await asyncio.sleep(2)
+                continue
+            else:
+                # Last attempt failed, log and raise
+                logger.error(f"All {max_retries} attempts failed")
+                logger.error(f"Exception type: {type(e)}")
+                import traceback
+                logger.error(f"Full traceback: {traceback.format_exc()}")
+                raise e
+    
+    # If we get here, all attempts failed
+    logger.error("All retry attempts failed")
+    raise Exception("AI service temporarily unavailable. Please try again later.")
+
 # Fallback function removed
 
 
@@ -361,6 +548,13 @@ async def generate_questions_endpoint(request: QuestionRequest):
     """Generate questions endpoint"""
     logger.info(f"Generating {request.count} questions for {request.exam_type}/{request.topic}")
     questions = await generate_questions(request)
+    return questions
+
+@app.post("/api/ai-agents/questions", response_model=List[AIQuestion])
+async def generate_ai_agent_questions_endpoint(request: AIQuestionRequest):
+    """Generate questions for AI agents based on document content"""
+    logger.info(f"Generating {request.question_count} questions for AI agent {request.agent_id}")
+    questions = await generate_ai_agent_questions(request)
     return questions
 
 # Session creation removed - focusing on question generation only

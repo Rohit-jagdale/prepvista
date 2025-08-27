@@ -46,11 +46,13 @@ model User {
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
 
-    accounts Account[]
-    sessions Session[]
-    practiceSessions PracticeSession[]
-    achievements UserAchievement[]
-    studyStreaks StudyStreak[]
+    accounts           Account[]
+    sessions           Session[]
+    practiceSessions   PracticeSession[]
+    achievements       UserAchievement[]
+    studyStreaks       StudyStreak[]
+    aiAgents           AIAgent[]
+    aiPracticeSessions AIPracticeSession[]
 }
 
 model VerificationToken {
@@ -59,6 +61,99 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// AI Agents for PDF-based question generation
+model AIAgent {
+    id          String      @id @default(cuid())
+    userId      String
+    name        String
+    subject     String
+    description String?
+    status      AgentStatus @default(ACTIVE)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    lastUsed    DateTime    @default(now())
+
+    user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+    documents        Document[]
+    questions        AIQuestion[]
+    practiceSessions AIPracticeSession[]
+}
+
+// Documents uploaded by users for AI agents
+model Document {
+    id           String         @id @default(cuid())
+    agentId      String
+    fileName     String
+    originalName String
+    fileSize     Int // Size in bytes
+    fileType     String // MIME type
+    filePath     String // Storage path
+    status       DocumentStatus @default(PROCESSING)
+    processedAt  DateTime?
+    createdAt    DateTime       @default(now())
+
+    agent     AIAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+    questions AIQuestion[]
+}
+
+// AI-generated questions from documents
+model AIQuestion {
+    id                 String         @id @default(cuid())
+    agentId            String
+    documentId         String?
+    questionText       String         @db.Text
+    questionType       AIQuestionType
+    difficulty         Difficulty
+    options            String[] // For MCQ questions
+    correctAnswer      String
+    explanation        String?        @db.Text
+    expectedAnswer     String? // For short answer/essay questions
+    keyPoints          String[] // For short answer questions
+    evaluationCriteria String[] // For essay questions
+    centralConcept     String? // For mind map questions
+    expectedBranches   String[] // For mind map questions
+    metadata           Json? // Additional AI-generated metadata
+    createdAt          DateTime       @default(now())
+
+    agent            AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+    document         Document?                   @relation(fields: [documentId], references: [id], onDelete: SetNull)
+    practiceSessions AIPracticeSessionQuestion[]
+}
+
+// AI Practice Sessions
+model AIPracticeSession {
+    id             String   @id @default(cuid())
+    userId         String
+    agentId        String
+    sessionName    String
+    totalQuestions Int
+    correctAnswers Int
+    score          Float // Percentage score
+    timeSpent      Int // Time spent in seconds
+    completedAt    DateTime @default(now())
+    createdAt      DateTime @default(now())
+
+    user      User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    agent     AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+    questions AIPracticeSessionQuestion[]
+}
+
+// Many-to-many relationship between AI Practice Session and AI Questions
+model AIPracticeSessionQuestion {
+    id                String   @id @default(cuid())
+    practiceSessionId String
+    questionId        String
+    userAnswer        String?
+    isCorrect         Boolean?
+    timeSpent         Int // Time spent on this question in seconds
+    answeredAt        DateTime @default(now())
+
+    practiceSession AIPracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+    question        AIQuestion        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@unique([practiceSessionId, questionId])
 }
 
 // Exam Categories (UPSC, MPSC, IBPS, SSC, etc.)
@@ -72,57 +167,57 @@ model ExamCategory {
     updatedAt   DateTime @updatedAt
 
     practiceSessions PracticeSession[]
-    questions Question[]
+    questions        Question[]
 }
 
 // Questions for practice
 model Question {
-    id              String       @id @default(cuid())
-    examCategoryId  String
-    questionText    String       @db.Text
-    questionType    QuestionType
-    difficulty      Difficulty
-    options         String[]     // For MCQ questions
-    correctAnswer   String
-    explanation     String?      @db.Text
-    tags            String[]
-    createdAt       DateTime     @default(now())
-    updatedAt       DateTime     @updatedAt
+    id             String       @id @default(cuid())
+    examCategoryId String
+    questionText   String       @db.Text
+    questionType   QuestionType
+    difficulty     Difficulty
+    options        String[] // For MCQ questions
+    correctAnswer  String
+    explanation    String?      @db.Text
+    tags           String[]
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
 
-    examCategory ExamCategory @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
+    examCategory     ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
     practiceSessions PracticeSessionQuestion[]
 }
 
 // Practice Sessions
 model PracticeSession {
-    id              String       @id @default(cuid())
-    userId          String
-    examCategoryId  String
-    sessionName     String
-    totalQuestions  Int
-    correctAnswers  Int
-    score           Float        // Percentage score
-    timeSpent       Int          // Time spent in seconds
-    completedAt     DateTime     @default(now())
-    createdAt       DateTime     @default(now())
+    id             String   @id @default(cuid())
+    userId         String
+    examCategoryId String
+    sessionName    String
+    totalQuestions Int
+    correctAnswers Int
+    score          Float // Percentage score
+    timeSpent      Int // Time spent in seconds
+    completedAt    DateTime @default(now())
+    createdAt      DateTime @default(now())
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    examCategory ExamCategory @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
-    questions PracticeSessionQuestion[]
+    user         User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    examCategory ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
+    questions    PracticeSessionQuestion[]
 }
 
 // Many-to-many relationship between PracticeSession and Question
 model PracticeSessionQuestion {
-    id                String          @id @default(cuid())
+    id                String   @id @default(cuid())
     practiceSessionId String
     questionId        String
     userAnswer        String?
     isCorrect         Boolean
-    timeSpent         Int             // Time spent on this question in seconds
-    answeredAt        DateTime        @default(now())
+    timeSpent         Int // Time spent on this question in seconds
+    answeredAt        DateTime @default(now())
 
     practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
-    question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
     @@unique([practiceSessionId, questionId])
 }
@@ -133,8 +228,8 @@ model Achievement {
     name        String   @unique
     description String
     icon        String
-    criteria    String   // What needs to be achieved
-    points      Int      // Points awarded for this achievement
+    criteria    String // What needs to be achieved
+    points      Int // Points awarded for this achievement
     createdAt   DateTime @default(now())
 
     userAchievements UserAchievement[]
@@ -142,12 +237,12 @@ model Achievement {
 
 // User-Achievement relationship
 model UserAchievement {
-    id            String      @id @default(cuid())
+    id            String   @id @default(cuid())
     userId        String
     achievementId String
-    earnedAt      DateTime    @default(now())
+    earnedAt      DateTime @default(now())
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
     achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
     @@unique([userId, achievementId])
@@ -155,14 +250,14 @@ model UserAchievement {
 
 // Study Streaks tracking
 model StudyStreak {
-    id        String   @id @default(cuid())
+    id        String    @id @default(cuid())
     userId    String
     startDate DateTime
     endDate   DateTime?
     daysCount Int
-    isActive  Boolean  @default(true)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    isActive  Boolean   @default(true)
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -181,4 +276,26 @@ enum Difficulty {
     MEDIUM
     HARD
     EXPERT
+}
+
+enum AIQuestionType {
+    MCQ
+    OBJECTIVE
+    MINDMAP
+    SHORT_ANSWER
+    ESSAY
+}
+
+enum AgentStatus {
+    ACTIVE
+    INACTIVE
+    PROCESSING
+    ERROR
+}
+
+enum DocumentStatus {
+    PROCESSING
+    PROCESSED
+    ERROR
+    DELETED
 }

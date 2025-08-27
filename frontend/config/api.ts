@@ -5,11 +5,11 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 // API URL configuration
 export const API_CONFIG = {
-  // Development: Use local backend
-  // Production: Use deployed backend URL
-  BASE_URL: isDevelopment 
-    ? 'http://localhost:8000' 
-    : process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-url.railway.app',
+  // Base URL for the main API
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  
+  // AI Backend URL for Gemini integration
+  AI_BACKEND_URL: process.env.NEXT_PUBLIC_AI_BACKEND_URL || 'http://localhost:8000',
   
   // API endpoints
   ENDPOINTS: {
@@ -19,6 +19,12 @@ export const API_CONFIG = {
     // System health
     HEALTH: '/health',
     MODEL_INFO: '/model-info',
+    
+    // AI Agents
+    AGENTS: '/api/agents',
+    AGENT_QUESTIONS: (id: string) => `/api/agents/${id}/questions`,
+    AGENT_PRACTICE_SESSION: (id: string) => `/api/agents/${id}/practice-session`,
+    AI_AGENT_QUESTIONS: '/api/ai-agents/questions'
   },
   
   // Request configuration

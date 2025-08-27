@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { BookOpen, User, LogOut, ChevronDown, Home, BarChart3, Sun, Moon } from 'lucide-react'
+import { BookOpen, User, LogOut, ChevronDown, Home, BarChart3, Sun, Moon, Bot } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme'
 import Link from 'next/link'
@@ -43,6 +43,10 @@ export default function Header() {
             <Link href="/app/practice" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center">
               <BookOpen className="w-4 h-4 mr-2" />
               Practice
+            </Link>
+            <Link href="/agents" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center">
+              <Bot className="w-4 h-4 mr-2" />
+              Agents
             </Link>
             <Link href="/app/progress" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center">
               <BarChart3 className="w-4 h-4 mr-2" />

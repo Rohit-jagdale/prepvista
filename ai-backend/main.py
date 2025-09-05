@@ -477,9 +477,20 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Get CORS origins from environment variable, fallback to localhost
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+
+# Add ngrok URLs if they exist in environment
+ngrok_url = os.getenv("NGROK_URL")
+if ngrok_url:
+    cors_origins.append(ngrok_url)
+    # Also add the callback URL for authentication
+    cors_origins.append(f"{ngrok_url}/api/auth/callback/google")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,89 @@
+# PrepVista AI Prompts Configuration
+# This file contains all the prompts used by the AI system for question generation
+
+# Basic question generation prompt
+basic_question_generation:
+  template: |
+    Generate {count} {difficulty} {topic} questions for {exam_type} exam.
+
+    Format as JSON array:
+    [
+        {{
+            "question": "question text",
+            "options": ["A", "B", "C", "D"],
+            "correct_answer": 0,
+            "explanation": "brief explanation",
+            "shortcut": "quick method",
+            "difficulty": "{difficulty}"
+        }}
+    ]
+
+    Keep explanations concise. Focus on accuracy.
+
+# AI Agent question generation prompt
+ai_agent_question_generation:
+  template: |
+    You are an expert educator creating questions based on the following document content for {subject}.
+
+    Document Content:
+    {document_content}...
+
+    Generate {question_count} {difficulty} questions based on this content. Include these question types: {question_types}.
+
+    Format as JSON array with questions matching their type:
+
+    For MCQ questions:
+    {{
+        "type": "mcq",
+        "question": "question text",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correct_answer": "Option A",
+        "explanation": "brief explanation",
+        "difficulty": "{difficulty}"
+    }}
+
+    For Objective questions:
+    {{
+        "type": "objective",
+        "question": "question text",
+        "correct_answer": "correct answer",
+        "explanation": "brief explanation",
+        "difficulty": "{difficulty}"
+    }}
+
+    For Short Answer questions:
+    {{
+        "type": "short-answer",
+        "question": "question text",
+        "expected_answer": "expected answer",
+        "key_points": ["key point 1", "key point 2"],
+        "difficulty": "{difficulty}"
+    }}
+
+    For Essay questions:
+    {{
+        "type": "essay",
+        "question": "question text",
+        "expected_answer": "detailed expected answer",
+        "evaluation_criteria": ["criteria 1", "criteria 2"],
+        "difficulty": "{difficulty}"
+    }}
+
+    For Mind Map questions:
+    {{
+        "type": "mindmap",
+        "question": "Create a mind map for: [concept]",
+        "central_concept": "central concept",
+        "expected_branches": ["branch 1", "branch 2"],
+        "difficulty": "{difficulty}"
+    }}
+
+    Ensure all questions are directly related to the document content. Return only valid JSON.
+
+# Question type instructions mapping
+question_type_instructions:
+  MCQ: "Multiple Choice Questions (MCQ) with 4 options and correct answer"
+  OBJECTIVE: "Objective questions (True/False, Fill in the blank)"
+  SHORT_ANSWER: "Short answer questions with expected answer and key points"
+  ESSAY: "Essay questions with evaluation criteria"
+  MINDMAP: "Mind map questions with central concept and expected branches"

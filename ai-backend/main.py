@@ -12,6 +12,8 @@ import time
 import asyncio
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+import yaml
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -32,6 +34,32 @@ AI_ENABLED = True  # Can be disabled via environment variable
 # AI Model (will be initialized lazily)
 ai_model = None
 ai_initialized = False
+
+# Prompts loaded from YAML file
+prompts = None
+
+def load_prompts():
+    """Load prompts from prompt.yml file"""
+    global prompts
+    try:
+        prompt_file = Path(__file__).parent / "prompt.yml"
+        with open(prompt_file, 'r', encoding='utf-8') as file:
+            prompts = yaml.safe_load(file)
+        logger.info("Prompts loaded successfully from prompt.yml")
+    except Exception as e:
+        logger.error(f"Failed to load prompts from prompt.yml: {e}")
+        prompts = None
+
+def get_prompt(prompt_key: str, **kwargs) -> str:
+    """Get a formatted prompt from the loaded prompts"""
+    if not prompts:
+        raise Exception("Prompts not loaded")
+    
+    if prompt_key not in prompts:
+        raise Exception(f"Prompt key '{prompt_key}' not found")
+    
+    template = prompts[prompt_key]["template"]
+    return template.format(**kwargs)
 
 class Question(BaseModel):
     id: str
@@ -162,21 +190,13 @@ async def generate_ai_questions(request: QuestionRequest) -> List[Question]:
         try:
             logger.info(f"Attempt {attempt + 1}/{max_retries} to generate questions")
             
-            prompt = f"""Generate {request.count} {request.difficulty} {request.topic} questions for {request.exam_type} exam.
-
-Format as JSON array:
-[
-    {{
-        "question": "question text",
-        "options": ["A", "B", "C", "D"],
-        "correct_answer": 0,
-        "explanation": "brief explanation",
-        "shortcut": "quick method",
-        "difficulty": "{request.difficulty}"
-    }}
-]
-
-Keep explanations concise. Focus on accuracy."""
+            prompt = get_prompt(
+                "basic_question_generation",
+                count=request.count,
+                difficulty=request.difficulty,
+                topic=request.topic,
+                exam_type=request.exam_type
+            )
             
             logger.info(f"Sending prompt to AI: {prompt[:200]}...")
             
@@ -283,73 +303,19 @@ async def generate_ai_agent_questions(request: AIQuestionRequest) -> List[AIQues
             # Create a comprehensive prompt for different question types
             question_type_instructions = []
             for q_type in request.question_types:
-                if q_type.upper() == "MCQ":
-                    question_type_instructions.append("Multiple Choice Questions (MCQ) with 4 options and correct answer")
-                elif q_type.upper() == "OBJECTIVE":
-                    question_type_instructions.append("Objective questions (True/False, Fill in the blank)")
-                elif q_type.upper() == "SHORT_ANSWER":
-                    question_type_instructions.append("Short answer questions with expected answer and key points")
-                elif q_type.upper() == "ESSAY":
-                    question_type_instructions.append("Essay questions with evaluation criteria")
-                elif q_type.upper() == "MINDMAP":
-                    question_type_instructions.append("Mind map questions with central concept and expected branches")
+                if q_type.upper() in prompts.get("question_type_instructions", {}):
+                    question_type_instructions.append(prompts["question_type_instructions"][q_type.upper()])
+                else:
+                    question_type_instructions.append(f"{q_type} questions")
             
-            prompt = f"""You are an expert educator creating questions based on the following document content for {request.subject}.
-
-Document Content:
-{request.document_content[:2000]}...
-
-Generate {request.question_count} {request.difficulty} questions based on this content. Include these question types: {', '.join(question_type_instructions)}.
-
-Format as JSON array with questions matching their type:
-
-For MCQ questions:
-{{
-    "type": "mcq",
-    "question": "question text",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correct_answer": "Option A",
-    "explanation": "brief explanation",
-    "difficulty": "{request.difficulty}"
-}}
-
-For Objective questions:
-{{
-    "type": "objective",
-    "question": "question text",
-    "correct_answer": "correct answer",
-    "explanation": "brief explanation",
-    "difficulty": "{request.difficulty}"
-}}
-
-For Short Answer questions:
-{{
-    "type": "short-answer",
-    "question": "question text",
-    "expected_answer": "expected answer",
-    "key_points": ["key point 1", "key point 2"],
-    "difficulty": "{request.difficulty}"
-}}
-
-For Essay questions:
-{{
-    "type": "essay",
-    "question": "question text",
-    "expected_answer": "detailed expected answer",
-    "evaluation_criteria": ["criteria 1", "criteria 2"],
-    "difficulty": "{request.difficulty}"
-}}
-
-For Mind Map questions:
-{{
-    "type": "mindmap",
-    "question": "Create a mind map for: [concept]",
-    "central_concept": "central concept",
-    "expected_branches": ["branch 1", "branch 2"],
-    "difficulty": "{request.difficulty}"
-}}
-
-Ensure all questions are directly related to the document content. Return only valid JSON."""
+            prompt = get_prompt(
+                "ai_agent_question_generation",
+                subject=request.subject,
+                document_content=request.document_content[:2000],
+                question_count=request.question_count,
+                difficulty=request.difficulty,
+                question_types=', '.join(question_type_instructions)
+            )
             
             logger.info(f"Sending AI agent prompt to AI: {prompt[:200]}...")
             
@@ -498,7 +464,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize AI model on startup"""
+    """Initialize AI model and load prompts on startup"""
+    load_prompts()
     await initialize_ai_model()
 
 @app.get("/debug")
@@ -511,6 +478,8 @@ async def debug_info():
         "google_api_key_preview": os.getenv("GOOGLE_API_KEY", "NOT_FOUND")[:10] + "..." if os.getenv("GOOGLE_API_KEY") else "NOT_FOUND",
         "ai_timeout": AI_TIMEOUT,
         "ai_enabled": AI_ENABLED,
+        "prompts_loaded": prompts is not None,
+        "available_prompts": list(prompts.keys()) if prompts else [],
         "timestamp": time.time()
     }
 
@@ -585,6 +554,30 @@ async def get_model_info():
         "mode": "ai_enabled" if ai_model else "ai_disabled",
         "initialized": ai_initialized
     }
+
+@app.get("/test-prompt")
+async def test_prompt():
+    """Test endpoint to verify prompt formatting"""
+    try:
+        if not prompts:
+            return {"error": "Prompts not loaded"}
+        
+        # Test basic question generation prompt
+        test_prompt = get_prompt(
+            "basic_question_generation",
+            count=2,
+            difficulty="easy",
+            topic="mathematics",
+            exam_type="upsc"
+        )
+        
+        return {
+            "success": True,
+            "test_prompt_preview": test_prompt[:200] + "..." if len(test_prompt) > 200 else test_prompt,
+            "prompt_length": len(test_prompt)
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

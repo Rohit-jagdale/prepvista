@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { checkUserSubscriptionStatus, markTrialAsUsed } from '@/lib/payment-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,19 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Check subscription status before allowing practice
+    const subscriptionStatus = await checkUserSubscriptionStatus(user.id)
+    
+    if (!subscriptionStatus.canPractice) {
+      return NextResponse.json({ 
+        error: 'Payment required',
+        message: subscriptionStatus.needsPayment 
+          ? 'You have used your free trial. Please subscribe to continue practicing.'
+          : 'Unable to start practice session',
+        subscriptionStatus
+      }, { status: 402 }) // 402 Payment Required
     }
 
     const body = await request.json()
@@ -65,6 +79,11 @@ export async function POST(request: NextRequest) {
         completedAt: new Date()
       }
     })
+
+    // Mark trial as used if this is the first practice session
+    if (!subscriptionStatus.hasUsedTrial && !subscriptionStatus.isSubscribed) {
+      await markTrialAsUsed(user.id)
+    }
 
     // Check for achievements
     const achievements = await prisma.achievement.findMany()

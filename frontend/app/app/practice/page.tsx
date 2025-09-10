@@ -7,6 +7,7 @@ import QuestionPractice from '@/components/QuestionPractice';
 import PracticeCompletion from '@/components/PracticeCompletion';
 import Header from '@/components/Header';
 import GlobalLoading from '@/components/GlobalLoading';
+import PaymentGuard from '@/components/PaymentGuard';
 import { api } from '@/lib/api';
 
 // Practice flow states
@@ -168,40 +169,42 @@ export default function PracticePage() {
           <Header />
           
           <main className="container mx-auto px-4 py-8">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                Choose Your Exam Type
-              </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Select the exam you're preparing for to get started with AI-powered practice questions
-              </p>
-            </div>
+            <PaymentGuard showSubscriptionStatus={true}>
+              <div className="text-center mb-12">
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  Choose Your Exam Type
+                </h1>
+                <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                  Select the exam you're preparing for to get started with AI-powered practice questions
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {examTypesList.map((exam) => (
-                <div
-                  key={exam.id}
-                  className="card hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                  onClick={() => handleExamSelect(exam.id)}
-                >
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className={`w-12 h-12 ${exam.color} rounded-lg flex items-center justify-center`}>
-                      <exam.icon className="w-6 h-6 text-white" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {examTypesList.map((exam) => (
+                  <div
+                    key={exam.id}
+                    className="card hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                    onClick={() => handleExamSelect(exam.id)}
+                  >
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className={`w-12 h-12 ${exam.color} rounded-lg flex items-center justify-center`}>
+                        <exam.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exam.name}</h3>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{exam.name}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">{exam.description}</p>
+                    <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
+                      Start Practice
+                      <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">{exam.description}</p>
-                  <div className="flex items-center text-primary-600 dark:text-primary-400 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300">
-                    Start Practice
-                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </PaymentGuard>
           </main>
         </div>
       );
@@ -217,12 +220,14 @@ export default function PracticePage() {
 
     case 'question-practice':
       return (
-        <QuestionPractice 
-          examType={practiceData.examType}
-          topic={practiceData.topic}
-          onBack={handleBackToTopicSelection}
-          onComplete={handlePracticeComplete}
-        />
+        <PaymentGuard showSubscriptionStatus={false}>
+          <QuestionPractice 
+            examType={practiceData.examType}
+            topic={practiceData.topic}
+            onBack={handleBackToTopicSelection}
+            onComplete={handlePracticeComplete}
+          />
+        </PaymentGuard>
       );
 
     case 'completion':

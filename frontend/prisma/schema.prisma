@@ -46,6 +46,15 @@ model User {
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
 
+    // Payment and subscription fields
+    hasUsedTrial     Boolean   @default(false)
+    isSubscribed     Boolean   @default(false)
+    subscriptionId   String?   @unique
+    subscriptionPlan String? // 'monthly', 'yearly', etc.
+    subscriptionEnds DateTime?
+    paymentId        String?   @unique // Razorpay payment ID
+    lastPaymentDate  DateTime?
+
     accounts           Account[]
     sessions           Session[]
     practiceSessions   PracticeSession[]
@@ -53,6 +62,7 @@ model User {
     studyStreaks       StudyStreak[]
     aiAgents           AIAgent[]
     aiPracticeSessions AIPracticeSession[]
+    payments           Payment[]
 }
 
 model VerificationToken {
@@ -262,6 +272,23 @@ model StudyStreak {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Payment tracking
+model Payment {
+    id             String        @id @default(cuid())
+    userId         String
+    razorpayId     String        @unique
+    amount         Int // Amount in paise (smallest currency unit)
+    currency       String        @default("INR")
+    status         PaymentStatus
+    plan           String // 'monthly', 'yearly', etc.
+    subscriptionId String?       @unique
+    paymentMethod  String? // 'card', 'upi', 'netbanking', etc.
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 // Enums
 enum QuestionType {
     MULTIPLE_CHOICE
@@ -298,4 +325,12 @@ enum DocumentStatus {
     PROCESSED
     ERROR
     DELETED
+}
+
+enum PaymentStatus {
+    PENDING
+    CAPTURED
+    FAILED
+    CANCELLED
+    REFUNDED
 }

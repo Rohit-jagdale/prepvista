@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   Upload, 
@@ -13,6 +13,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { buildAiUrl } from '@/config/api';
 
 interface CreateAgentModalProps {
   isOpen: boolean;
@@ -42,13 +43,38 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
     description: '',
     questionTypes: [] as string[],
     questionCount: 10,
-    difficulty: 'medium'
+    difficulty: 'medium',
+    documentId: '',
+    agentId: ''
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadStartTime, setUploadStartTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate elapsed time for upload progress
+  const getElapsedTime = () => {
+    if (!uploadStartTime) return '';
+    const elapsed = Math.floor((Date.now() - uploadStartTime) / 1000);
+    return `${elapsed}s`;
+  };
+
+  // Update elapsed time display every second during upload
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isUploading && uploadStartTime) {
+      interval = setInterval(() => {
+        // Force re-render to update elapsed time
+        setUploadProgress(prev => prev);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isUploading, uploadStartTime]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -78,41 +104,125 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
     }));
   };
 
-  const simulateFileUpload = async () => {
+  const createAgentFirst = async () => {
+    if (!formData.name || !formData.subject || formData.questionTypes.length === 0) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setIsCreating(true);
+    setError(null);
+
+    try {
+      // Create agent first (without PDF)
+      const agentData = {
+        name: formData.name,
+        subject: formData.subject,
+        description: formData.description,
+        questionTypes: formData.questionTypes,
+        questionCount: formData.questionCount,
+        difficulty: formData.difficulty
+      };
+
+      const response = await fetch('/api/agents/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(agentData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to create agent');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setFormData(prev => ({ ...prev, agentId: result.agent.id }));
+        setIsCreating(false);
+        setStep(2);
+      } else {
+        throw new Error(result.error || 'Failed to create agent');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create agent');
+      setIsCreating(false);
+    }
+  };
+
+  const uploadPDF = async () => {
+    if (!selectedFile || !formData.agentId) return;
+    
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadError(null);
+    setUploadStartTime(Date.now());
     
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setUploadProgress(i);
+    try {
+      // Upload PDF to existing agent
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', selectedFile);
+      uploadFormData.append('agentId', formData.agentId);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 120000); // 120 second timeout (2 minutes)
+      
+      const response = await fetch('/api/agents/upload-pdf', {
+        method: 'POST',
+        body: uploadFormData,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || `Upload failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Upload failed');
+      }
+      
+      // Simulate progress for better UX
+      for (let i = 0; i <= 100; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        setUploadProgress(i);
+      }
+      
+      setFormData(prev => ({ ...prev, documentId: result.document.id }));
+      setIsUploading(false);
+      setStep(3);
+    } catch (error) {
+      let errorMessage = 'Failed to upload PDF';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Upload timeout - PDF processing is taking longer than expected. Please try again with a smaller file or check if the AI backend is running properly.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setUploadError(errorMessage);
+      setIsUploading(false);
     }
-    
-    setIsUploading(false);
-    setStep(2);
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile || formData.questionTypes.length === 0) return;
-    
-    setIsCreating(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const newAgent = {
-      id: Date.now().toString(),
+    // Agent and PDF are already created, just close the modal
+    onAgentCreated({
+      id: formData.agentId,
       name: formData.name,
       subject: formData.subject,
-      documentName: selectedFile.name,
-      questionTypes: formData.questionTypes,
-      createdAt: new Date().toISOString(),
-      questionCount: formData.questionCount,
-      lastUsed: new Date().toISOString()
-    };
-    
-    onAgentCreated(newAgent);
-    setIsCreating(false);
+      description: formData.description,
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString()
+    });
     onClose();
     resetForm();
   };
@@ -124,11 +234,14 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
       description: '',
       questionTypes: [],
       questionCount: 10,
-      difficulty: 'medium'
+      difficulty: 'medium',
+      documentId: '',
+      agentId: ''
     });
     setSelectedFile(null);
     setStep(1);
     setUploadProgress(0);
+    setUploadError(null);
   };
 
   if (!isOpen) return null;
@@ -175,14 +288,14 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
           </div>
         </div>
 
-        {/* Step 1: PDF Upload */}
+        {/* Step 1: Agent Details */}
         {step === 1 && (
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Upload Your Study Material
+              Create Your AI Agent
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Upload a PDF document to create an AI agent that will generate questions based on its content.
+              First, let's set up your AI agent with basic information.
             </p>
 
             {/* File Upload Area */}
@@ -243,6 +356,27 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
               className="hidden"
             />
 
+            {/* Error Display */}
+            {uploadError && (
+              <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
+                    <div>
+                      <h4 className="font-medium text-red-800 dark:text-red-200">Upload Error</h4>
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">{uploadError}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={simulateFileUpload}
+                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* File Requirements */}
             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">File Requirements:</h4>
@@ -254,6 +388,25 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
               </ul>
             </div>
 
+            {/* Progress Bar */}
+        {isUploading && (
+          <div className="mt-6">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <span>Processing PDF... {getElapsedTime()}</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Large PDFs may take 1-2 minutes to process. Please be patient...
+            </p>
+          </div>
+        )}
+
             {/* Next Button */}
             <div className="mt-6 flex justify-end">
               <button
@@ -261,17 +414,17 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
                 disabled={!selectedFile || isUploading}
                 className="inline-flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading... {uploadProgress}%
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <FileText className="w-4 h-4 ml-2" />
-                  </>
-                )}
+          {isUploading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing PDF... {getElapsedTime()}
+            </>
+          ) : (
+            <>
+              Next
+              <FileText className="w-4 h-4 ml-2" />
+            </>
+          )}
               </button>
             </div>
           </div>

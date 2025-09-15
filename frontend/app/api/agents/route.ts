@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { buildAiUrl } from '@/config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,12 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const agentData = JSON.parse(formData.get('agentData') as string);
+    
+    console.log('Creating agent with data:', {
+      agentId: agentData.agentId,
+      name: agentData.name,
+      documentId: agentData.documentId
+    });
 
     if (!file) {
       return NextResponse.json(
@@ -50,47 +57,92 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create AI Agent
-    const agent = await prisma.aIAgent.create({
-      data: {
-        userId: user.id,
-        name: agentData.name,
-        subject: agentData.subject,
-        description: agentData.description,
-        status: 'PROCESSING'
+    // Create AI Agent (let Prisma generate the ID)
+    let agent;
+    try {
+      agent = await prisma.aIAgent.create({
+        data: {
+          userId: user.id,
+          name: agentData.name,
+          subject: agentData.subject,
+          description: agentData.description,
+          status: 'PROCESSING'
+        }
+      });
+      console.log('AIAgent created successfully:', agent.id);
+    } catch (error) {
+      console.error('Error creating AIAgent:', error);
+      throw new Error(`Failed to create AIAgent: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // Only upload to RAG system if we don't already have a documentId
+    let ragResult = null;
+    if (!agentData.documentId) {
+      // Upload PDF to RAG system
+      const ragFormData = new FormData();
+      ragFormData.append('file', file);
+      ragFormData.append('agent_id', agent.id);
+
+      const ragResponse = await fetch(buildAiUrl('/api/rag/upload-pdf'), {
+        method: 'POST',
+        body: ragFormData,
+      });
+
+      if (!ragResponse.ok) {
+        throw new Error('Failed to upload PDF to RAG system');
       }
-    });
+
+      ragResult = await ragResponse.json();
+    } else {
+      // Use existing documentId from previous upload
+      console.log('Reusing existing document chunks for agent:', agent.id, 'documentId:', agentData.documentId);
+      ragResult = {
+        success: true,
+        document_id: agentData.documentId,
+        message: 'Using existing document chunks',
+        chunks_created: 0
+      };
+    }
 
     // Create Document record
-    const document = await prisma.document.create({
-      data: {
+    let document;
+    try {
+      const documentData: any = {
         agentId: agent.id,
         fileName: `agent_${agent.id}_${Date.now()}.pdf`,
         originalName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        filePath: `/uploads/agents/${agent.id}/${file.name}`, // This would be the actual file path after upload
-        status: 'PROCESSING'
-      }
-    });
-
-    // TODO: Here you would actually upload the file to storage (S3, local filesystem, etc.)
-    // For now, we'll simulate the upload process
-
-    // Update document status to processed
-    await prisma.document.update({
-      where: { id: document.id },
-      data: { 
-        status: 'PROCESSED',
+        filePath: `/uploads/agents/${agent.id}/${file.name}`,
+        status: 'PROCESSED' as const,
         processedAt: new Date()
+      };
+
+      // Use document_id from RAG result if available, otherwise let Prisma generate it
+      if (ragResult && ragResult.document_id) {
+        documentData.id = ragResult.document_id;
       }
-    });
+
+      document = await prisma.document.create({
+        data: documentData
+      });
+      console.log('Document created successfully:', document.id);
+    } catch (error) {
+      console.error('Error creating Document:', error);
+      throw new Error(`Failed to create Document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     // Update agent status to active
-    await prisma.aIAgent.update({
-      where: { id: agent.id },
-      data: { status: 'ACTIVE' }
-    });
+    try {
+      await prisma.aIAgent.update({
+        where: { id: agent.id },
+        data: { status: 'ACTIVE' }
+      });
+      console.log('Agent status updated to ACTIVE');
+    } catch (error) {
+      console.error('Error updating agent status:', error);
+      // Don't throw here, agent is already created
+    }
 
     return NextResponse.json({
       success: true,
@@ -113,7 +165,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating agent:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

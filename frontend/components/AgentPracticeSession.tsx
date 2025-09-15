@@ -63,22 +63,25 @@ export default function AgentPracticeSession({ agentId, agentName, onClose }: Ag
   const generateQuestions = async () => {
     try {
       setIsLoading(true);
-      console.log('Generating questions for agent:', agentId);
       
-      const response = await fetch(`/api/agents/${agentId}/questions`, {
+      // Use RAG system to generate questions
+      const response = await fetch('/api/ai-agents/questions/rag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          questionCount: 10,
-          questionTypes: ['MCQ', 'OBJECTIVE', 'SHORT_ANSWER']
+          agent_id: agentId,
+          exam_type: 'general',
+          topic: 'comprehensive',
+          difficulty: 'medium',
+          count: 10,
+          use_rag: true
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Questions response:', data);
         
         if (data.success && data.questions && Array.isArray(data.questions)) {
           // Ensure questions have the correct structure
@@ -98,18 +101,17 @@ export default function AgentPracticeSession({ agentId, agentName, onClose }: Ag
           }));
           
           setQuestions(validatedQuestions);
-          console.log('Questions set successfully:', validatedQuestions.length);
         } else {
-          console.error('Invalid questions data:', data);
-          throw new Error('Invalid questions data received');
+          console.error('Invalid RAG questions data:', data);
+          throw new Error('Invalid RAG questions data received');
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to generate questions:', response.status, errorData);
-        throw new Error(`Failed to generate questions: ${response.status}`);
+        console.error('Failed to generate RAG questions:', response.status, errorData);
+        throw new Error(`Failed to generate RAG questions: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error generating questions:', error);
+      console.error('Error generating RAG questions:', error);
       // Set empty questions array to prevent rendering errors
       setQuestions([]);
     } finally {
@@ -317,12 +319,6 @@ export default function AgentPracticeSession({ agentId, agentName, onClose }: Ag
 
   const currentQuestion = questions[currentQuestionIndex];
   const userAnswer = userAnswers[currentQuestion.id];
-
-  // Debug logging
-  console.log('Current question:', currentQuestion);
-  console.log('Current question index:', currentQuestionIndex);
-  console.log('Total questions:', questions.length);
-  console.log('User answer for current question:', userAnswer);
 
   // Safety check to ensure currentQuestion exists
   if (!currentQuestion) {

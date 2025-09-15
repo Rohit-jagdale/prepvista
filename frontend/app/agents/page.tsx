@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { 
   Bot, 
@@ -16,8 +16,10 @@ import {
   BarChart3
 } from 'lucide-react';
 import Link from 'next/link';
-import CreateAgentModal from '@/components/CreateAgentModal';
+import CreateAgentModalNew from '@/components/CreateAgentModalNew';
 import AgentPracticeSession from '@/components/AgentPracticeSession';
+import AgentRAGQuery from '@/components/AgentRAGQuery';
+
 
 interface Agent {
   id: string;
@@ -40,30 +42,11 @@ const questionTypeOptions = [
 
 export default function AgentsPage() {
   const { user, isAuthenticated } = useAuth();
-  const [agents, setAgents] = useState<Agent[]>([
-    {
-      id: '1',
-      name: 'UPSC History Agent',
-      subject: 'History',
-      documentName: 'Ancient_India_History.pdf',
-      questionTypes: ['mcq', 'objective'],
-      createdAt: '2024-01-15',
-      questionCount: 45,
-      lastUsed: '2024-01-20'
-    },
-    {
-      id: '2',
-      name: 'MPSC Geography Agent',
-      subject: 'Geography',
-      documentName: 'Maharashtra_Geography.pdf',
-      questionTypes: ['mcq', 'mindmap'],
-      createdAt: '2024-01-10',
-      questionCount: 32,
-      lastUsed: '2024-01-18'
-    }
-  ]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [practicingAgent, setPracticingAgent] = useState<Agent | null>(null);
+  const [ragQueryAgent, setRagQueryAgent] = useState<Agent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleAgentCreated = (newAgent: Agent) => {
     setAgents(prev => [newAgent, ...prev]);
@@ -76,6 +59,38 @@ export default function AgentsPage() {
   const handleClosePractice = () => {
     setPracticingAgent(null);
   };
+
+  const handleStartRAGQuery = (agent: Agent) => {
+    setRagQueryAgent(agent);
+  };
+
+  const handleCloseRAGQuery = () => {
+    setRagQueryAgent(null);
+  };
+
+  // Fetch agents from API
+  useEffect(() => {
+    const fetchAgents = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/agents');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setAgents(data.agents);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching agents:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAgents();
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -93,6 +108,17 @@ export default function AgentsPage() {
           >
             Sign In
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading agents...</p>
         </div>
       </div>
     );
@@ -237,6 +263,13 @@ export default function AgentsPage() {
                     <Play className="w-4 h-4 mr-2" />
                     Practice
                   </button>
+                  <button 
+                    onClick={() => handleStartRAGQuery(agent)}
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    Ask
+                  </button>
                   <button className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Results
@@ -269,7 +302,7 @@ export default function AgentsPage() {
       </div>
 
       {/* Create Agent Modal */}
-      <CreateAgentModal
+      <CreateAgentModalNew
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onAgentCreated={handleAgentCreated}
@@ -281,6 +314,15 @@ export default function AgentsPage() {
           agentId={practicingAgent.id}
           agentName={practicingAgent.name}
           onClose={handleClosePractice}
+        />
+      )}
+
+      {/* RAG Query Modal */}
+      {ragQueryAgent && (
+        <AgentRAGQuery
+          agentId={ragQueryAgent.id}
+          agentName={ragQueryAgent.name}
+          onClose={handleCloseRAGQuery}
         />
       )}
     </div>

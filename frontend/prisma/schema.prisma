@@ -1,336 +1,324 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? @db.Text
-    access_token      String? @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? @db.Text
-    session_state     String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-
-    // Payment and subscription fields
-    hasUsedTrial     Boolean   @default(false)
-    isSubscribed     Boolean   @default(false)
-    subscriptionId   String?   @unique
-    subscriptionPlan String? // 'monthly', 'yearly', etc.
-    subscriptionEnds DateTime?
-    paymentId        String?   @unique // Razorpay payment ID
-    lastPaymentDate  DateTime?
-
-    accounts           Account[]
-    sessions           Session[]
-    practiceSessions   PracticeSession[]
-    achievements       UserAchievement[]
-    studyStreaks       StudyStreak[]
-    aiAgents           AIAgent[]
-    aiPracticeSessions AIPracticeSession[]
-    payments           Payment[]
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String?             @unique
+  emailVerified      DateTime?
+  image              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  hasUsedTrial       Boolean             @default(false)
+  isSubscribed       Boolean             @default(false)
+  lastPaymentDate    DateTime?
+  paymentId          String?             @unique
+  subscriptionEnds   DateTime?
+  subscriptionId     String?             @unique
+  subscriptionPlan   String?
+  aiAgents           AIAgent[]
+  aiPracticeSessions AIPracticeSession[]
+  accounts           Account[]
+  payments           Payment[]
+  practiceSessions   PracticeSession[]
+  sessions           Session[]
+  studyStreaks       StudyStreak[]
+  achievements       UserAchievement[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }
 
-// AI Agents for PDF-based question generation
 model AIAgent {
-    id          String      @id @default(cuid())
-    userId      String
-    name        String
-    subject     String
-    description String?
-    status      AgentStatus @default(ACTIVE)
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    lastUsed    DateTime    @default(now())
-
-    user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-    documents        Document[]
-    questions        AIQuestion[]
-    practiceSessions AIPracticeSession[]
+  id               String              @id @default(cuid())
+  userId           String
+  name             String
+  subject          String
+  description      String?
+  status           AgentStatus         @default(ACTIVE)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  lastUsed         DateTime            @default(now())
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  practiceSessions AIPracticeSession[]
+  questions        AIQuestion[]
+  documents        Document[]
 }
 
-// Documents uploaded by users for AI agents
 model Document {
-    id           String         @id @default(cuid())
-    agentId      String
-    fileName     String
-    originalName String
-    fileSize     Int // Size in bytes
-    fileType     String // MIME type
-    filePath     String // Storage path
-    status       DocumentStatus @default(PROCESSING)
-    processedAt  DateTime?
-    createdAt    DateTime       @default(now())
-
-    agent     AIAgent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
-    questions AIQuestion[]
+  id           String          @id @default(cuid())
+  agentId      String
+  fileName     String
+  originalName String
+  fileSize     Int
+  fileType     String
+  filePath     String
+  status       DocumentStatus  @default(PROCESSING)
+  processedAt  DateTime?
+  createdAt    DateTime        @default(now())
+  questions    AIQuestion[]
+  agent        AIAgent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  chunks       DocumentChunk[]
 }
 
-// AI-generated questions from documents
+model DocumentChunk {
+  id         String            @id @default(cuid())
+  documentId String
+  content    String
+  pageNumber Int?
+  chunkIndex Int
+  metadata   Json?
+  createdAt  DateTime          @default(now())
+  document   Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  vectors    VectorEmbedding[]
+}
+
+model VectorEmbedding {
+  id        String                @id @default(cuid())
+  chunkId   String
+  embedding Unsupported("vector")
+  model     String                @default("text-embedding-004")
+  createdAt DateTime              @default(now())
+  chunk     DocumentChunk         @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+}
+
 model AIQuestion {
-    id                 String         @id @default(cuid())
-    agentId            String
-    documentId         String?
-    questionText       String         @db.Text
-    questionType       AIQuestionType
-    difficulty         Difficulty
-    options            String[] // For MCQ questions
-    correctAnswer      String
-    explanation        String?        @db.Text
-    expectedAnswer     String? // For short answer/essay questions
-    keyPoints          String[] // For short answer questions
-    evaluationCriteria String[] // For essay questions
-    centralConcept     String? // For mind map questions
-    expectedBranches   String[] // For mind map questions
-    metadata           Json? // Additional AI-generated metadata
-    createdAt          DateTime       @default(now())
-
-    agent            AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-    document         Document?                   @relation(fields: [documentId], references: [id], onDelete: SetNull)
-    practiceSessions AIPracticeSessionQuestion[]
+  id                 String                      @id @default(cuid())
+  agentId            String
+  documentId         String?
+  questionText       String
+  questionType       AIQuestionType
+  difficulty         Difficulty
+  options            String[]
+  correctAnswer      String
+  explanation        String?
+  expectedAnswer     String?
+  keyPoints          String[]
+  evaluationCriteria String[]
+  centralConcept     String?
+  expectedBranches   String[]
+  metadata           Json?
+  createdAt          DateTime                    @default(now())
+  practiceSessions   AIPracticeSessionQuestion[]
+  agent              AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  document           Document?                   @relation(fields: [documentId], references: [id])
 }
 
-// AI Practice Sessions
 model AIPracticeSession {
-    id             String   @id @default(cuid())
-    userId         String
-    agentId        String
-    sessionName    String
-    totalQuestions Int
-    correctAnswers Int
-    score          Float // Percentage score
-    timeSpent      Int // Time spent in seconds
-    completedAt    DateTime @default(now())
-    createdAt      DateTime @default(now())
-
-    user      User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    agent     AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-    questions AIPracticeSessionQuestion[]
+  id             String                      @id @default(cuid())
+  userId         String
+  agentId        String
+  sessionName    String
+  totalQuestions Int
+  correctAnswers Int
+  score          Float
+  timeSpent      Int
+  completedAt    DateTime                    @default(now())
+  createdAt      DateTime                    @default(now())
+  agent          AIAgent                     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user           User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions      AIPracticeSessionQuestion[]
 }
 
-// Many-to-many relationship between AI Practice Session and AI Questions
 model AIPracticeSessionQuestion {
-    id                String   @id @default(cuid())
-    practiceSessionId String
-    questionId        String
-    userAnswer        String?
-    isCorrect         Boolean?
-    timeSpent         Int // Time spent on this question in seconds
-    answeredAt        DateTime @default(now())
+  id                String            @id @default(cuid())
+  practiceSessionId String
+  questionId        String
+  userAnswer        String?
+  isCorrect         Boolean?
+  timeSpent         Int
+  answeredAt        DateTime          @default(now())
+  practiceSession   AIPracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  question          AIQuestion        @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-    practiceSession AIPracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
-    question        AIQuestion        @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-    @@unique([practiceSessionId, questionId])
+  @@unique([practiceSessionId, questionId])
 }
 
-// Exam Categories (UPSC, MPSC, IBPS, SSC, etc.)
 model ExamCategory {
-    id          String   @id @default(cuid())
-    name        String   @unique
-    description String?
-    icon        String?
-    color       String?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-
-    practiceSessions PracticeSession[]
-    questions        Question[]
+  id               String            @id @default(cuid())
+  name             String            @unique
+  description      String?
+  icon             String?
+  color            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  practiceSessions PracticeSession[]
+  questions        Question[]
 }
 
-// Questions for practice
 model Question {
-    id             String       @id @default(cuid())
-    examCategoryId String
-    questionText   String       @db.Text
-    questionType   QuestionType
-    difficulty     Difficulty
-    options        String[] // For MCQ questions
-    correctAnswer  String
-    explanation    String?      @db.Text
-    tags           String[]
-    createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @updatedAt
-
-    examCategory     ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
-    practiceSessions PracticeSessionQuestion[]
+  id               String                    @id @default(cuid())
+  examCategoryId   String
+  questionText     String
+  questionType     QuestionType
+  difficulty       Difficulty
+  options          String[]
+  correctAnswer    String
+  explanation      String?
+  tags             String[]
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  practiceSessions PracticeSessionQuestion[]
+  examCategory     ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
 }
 
-// Practice Sessions
 model PracticeSession {
-    id             String   @id @default(cuid())
-    userId         String
-    examCategoryId String
-    sessionName    String
-    totalQuestions Int
-    correctAnswers Int
-    score          Float // Percentage score
-    timeSpent      Int // Time spent in seconds
-    completedAt    DateTime @default(now())
-    createdAt      DateTime @default(now())
-
-    user         User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    examCategory ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
-    questions    PracticeSessionQuestion[]
+  id             String                    @id @default(cuid())
+  userId         String
+  examCategoryId String
+  sessionName    String
+  totalQuestions Int
+  correctAnswers Int
+  score          Float
+  timeSpent      Int
+  completedAt    DateTime                  @default(now())
+  createdAt      DateTime                  @default(now())
+  examCategory   ExamCategory              @relation(fields: [examCategoryId], references: [id], onDelete: Cascade)
+  user           User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions      PracticeSessionQuestion[]
 }
 
-// Many-to-many relationship between PracticeSession and Question
 model PracticeSessionQuestion {
-    id                String   @id @default(cuid())
-    practiceSessionId String
-    questionId        String
-    userAnswer        String?
-    isCorrect         Boolean
-    timeSpent         Int // Time spent on this question in seconds
-    answeredAt        DateTime @default(now())
+  id                String          @id @default(cuid())
+  practiceSessionId String
+  questionId        String
+  userAnswer        String?
+  isCorrect         Boolean
+  timeSpent         Int
+  answeredAt        DateTime        @default(now())
+  practiceSession   PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  question          Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-    practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
-    question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-    @@unique([practiceSessionId, questionId])
+  @@unique([practiceSessionId, questionId])
 }
 
-// User Achievements
 model Achievement {
-    id          String   @id @default(cuid())
-    name        String   @unique
-    description String
-    icon        String
-    criteria    String // What needs to be achieved
-    points      Int // Points awarded for this achievement
-    createdAt   DateTime @default(now())
-
-    userAchievements UserAchievement[]
+  id               String            @id @default(cuid())
+  name             String            @unique
+  description      String
+  icon             String
+  criteria         String
+  points           Int
+  createdAt        DateTime          @default(now())
+  userAchievements UserAchievement[]
 }
 
-// User-Achievement relationship
 model UserAchievement {
-    id            String   @id @default(cuid())
-    userId        String
-    achievementId String
-    earnedAt      DateTime @default(now())
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime    @default(now())
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-
-    @@unique([userId, achievementId])
+  @@unique([userId, achievementId])
 }
 
-// Study Streaks tracking
 model StudyStreak {
-    id        String    @id @default(cuid())
-    userId    String
-    startDate DateTime
-    endDate   DateTime?
-    daysCount Int
-    isActive  Boolean   @default(true)
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  userId    String
+  startDate DateTime
+  endDate   DateTime?
+  daysCount Int
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Payment tracking
 model Payment {
-    id             String        @id @default(cuid())
-    userId         String
-    razorpayId     String        @unique
-    amount         Int // Amount in paise (smallest currency unit)
-    currency       String        @default("INR")
-    status         PaymentStatus
-    plan           String // 'monthly', 'yearly', etc.
-    subscriptionId String?       @unique
-    paymentMethod  String? // 'card', 'upi', 'netbanking', etc.
-    createdAt      DateTime      @default(now())
-    updatedAt      DateTime      @updatedAt
-
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  userId         String
+  razorpayId     String        @unique
+  amount         Int
+  currency       String        @default("INR")
+  status         PaymentStatus
+  plan           String
+  subscriptionId String?       @unique
+  paymentMethod  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Enums
 enum QuestionType {
-    MULTIPLE_CHOICE
-    SINGLE_CHOICE
-    TRUE_FALSE
-    FILL_IN_THE_BLANK
-    ESSAY
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+  FILL_IN_THE_BLANK
+  ESSAY
 }
 
 enum Difficulty {
-    EASY
-    MEDIUM
-    HARD
-    EXPERT
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
 }
 
 enum AIQuestionType {
-    MCQ
-    OBJECTIVE
-    MINDMAP
-    SHORT_ANSWER
-    ESSAY
+  MCQ
+  OBJECTIVE
+  MINDMAP
+  SHORT_ANSWER
+  ESSAY
 }
 
 enum AgentStatus {
-    ACTIVE
-    INACTIVE
-    PROCESSING
-    ERROR
+  ACTIVE
+  INACTIVE
+  PROCESSING
+  ERROR
 }
 
 enum DocumentStatus {
-    PROCESSING
-    PROCESSED
-    ERROR
-    DELETED
+  PROCESSING
+  PROCESSED
+  ERROR
+  DELETED
 }
 
 enum PaymentStatus {
-    PENDING
-    CAPTURED
-    FAILED
-    CANCELLED
-    REFUNDED
+  PENDING
+  CAPTURED
+  FAILED
+  CANCELLED
+  REFUNDED
 }

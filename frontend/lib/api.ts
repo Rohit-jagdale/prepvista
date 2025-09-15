@@ -1,4 +1,4 @@
-import API_CONFIG, { buildApiUrl } from '../config/api';
+import API_CONFIG, { buildApiUrl, buildAiUrl } from '../config/api';
 
 // Types for the simplified question generation system
 export interface Question {
@@ -77,6 +77,70 @@ class ApiClient {
     }
   }
 
+
+  // ---------- RAG (AI backend) ----------
+  async ragUploadPdf(params: { file: File; agentId: string; documentId?: string }): Promise<any> {
+    const url = buildAiUrl(API_CONFIG.ENDPOINTS.RAG_UPLOAD);
+    const form = new FormData();
+    form.append('file', params.file);
+    form.append('agent_id', params.agentId);
+    if (params.documentId) form.append('document_id', params.documentId);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      body: form,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    return response.json();
+  }
+
+  async ragQuery(body: {
+    query: string;
+    agent_id: string;
+    document_id?: string;
+    max_context_chunks?: number;
+    include_sources?: boolean;
+  }): Promise<any> {
+    const url = buildAiUrl(API_CONFIG.ENDPOINTS.RAG_QUERY);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+    return res.json();
+  }
+
+  async ragSearch(body: { query: string; agent_id: string; document_id?: string; max_results?: number }): Promise<any> {
+    const url = buildAiUrl(API_CONFIG.ENDPOINTS.RAG_SEARCH);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+    return res.json();
+  }
+
+  async ragStats(agentId: string): Promise<any> {
+    const url = buildAiUrl(API_CONFIG.ENDPOINTS.RAG_STATS(agentId));
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
+    }
+    return res.json();
+  }
 
 
   // Question Generation APIs

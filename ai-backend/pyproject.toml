@@ -3,6 +3,7 @@ name = "prepvista-ai-backend"
 version = "0.1.0"
 description = "AI backend for PrepVista exam preparation platform"
 authors = ["Your Name <your.email@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -15,6 +16,15 @@ python-multipart = "0.0.6"
 cors = "1.0.1"
 httpx = "0.25.2"
 pyyaml = "6.0.1"
+# PDF processing
+pypdf2 = "^3.0.1"
+pdfplumber = "^0.10.3"
+# Database
+psycopg2-binary = "^2.9.7"
+sqlalchemy = "^2.0.23"
+# Text processing
+tiktoken = "^0.5.1"
+numpy = "^1.24.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"

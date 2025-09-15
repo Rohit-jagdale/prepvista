@@ -24,7 +24,13 @@ export const API_CONFIG = {
     AGENTS: '/api/agents',
     AGENT_QUESTIONS: (id: string) => `/api/agents/${id}/questions`,
     AGENT_PRACTICE_SESSION: (id: string) => `/api/agents/${id}/practice-session`,
-    AI_AGENT_QUESTIONS: '/api/ai-agents/questions'
+    AI_AGENT_QUESTIONS: '/api/ai-agents/questions',
+
+    // RAG (AI backend)
+    RAG_UPLOAD: '/api/rag/upload-pdf',
+    RAG_QUERY: '/api/rag/query',
+    RAG_SEARCH: '/api/rag/search',
+    RAG_STATS: (agentId: string) => `/api/rag/stats/${agentId}`
   },
   
   // Request configuration
@@ -49,6 +55,11 @@ export const API_CONFIG = {
 // Helper function to build full API URLs
 export const buildApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
+};
+
+// Helper function to build full AI backend URLs
+export const buildAiUrl = (endpoint: string): string => {
+  return `${API_CONFIG.AI_BACKEND_URL}${endpoint}`;
 };
 
 // Helper function to get environment info

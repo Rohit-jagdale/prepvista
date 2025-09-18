@@ -233,7 +233,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -289,7 +289,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
 
         {/* Step 1: Agent Details */}
         {step === 1 && (
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Agent Name *
@@ -391,7 +391,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
 
         {/* Step 2: PDF Upload */}
         {step === 2 && (
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 Upload Study Material
@@ -525,7 +525,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
 
         {/* Step 3: Complete */}
         {step === 3 && (
-          <div className="p-6 text-center space-y-6">
+          <div className="p-6 text-center space-y-6 overflow-y-auto flex-1">
             <div className="space-y-4">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
               <div>

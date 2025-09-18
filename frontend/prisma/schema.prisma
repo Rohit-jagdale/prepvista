@@ -81,6 +81,7 @@ model AIAgent {
   practiceSessions AIPracticeSession[]
   questions        AIQuestion[]
   documents        Document[]
+  conversations    Conversation[]
 }
 
 model Document {
@@ -322,4 +323,30 @@ enum PaymentStatus {
   FAILED
   CANCELLED
   REFUNDED
+}
+
+model Conversation {
+  id        String                @id @default(cuid())
+  agentId   String
+  title     String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  agent     AIAgent               @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages  ConversationMessage[]
+}
+
+model ConversationMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  sources        Json? // Store sources as JSON for RAG responses
+  metadata       Json? // Store additional metadata like similarity scores
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
 }

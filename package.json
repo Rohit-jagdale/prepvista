@@ -1,0 +1,29 @@
+{
+  "name": "prepvista",
+  "version": "1.0.0",
+  "description": "``` PrepVista/ ├── 🧠 ai-backend/          # Python AI backend with Gemini integration │   ├── main.py             # FastAPI server with session management │   ├── pyproject.toml      # Poetry configuration and dependencies │   ├── poetry.lock         # Locked dependency versions │   └── Dockerfile          # Backend containerization ├── 🎨 frontend/            # Next.js React frontend │   ├── app/               # Next.js app directory │   ├── components/        # React components │   ├── lib/              # API utilities and types │   ├── config/           # Configuration files │   └── package.json      # Node.js dependencies ├── 📚 docs/               # Documentation and guides │   ├── README.md         # This file │   ├── SETUP.md          # Setup instructions │   ├── SESSION_SYSTEM_README.md  # Session system documentation │   ├── DEPLOYMENT.md     # Deployment guide │   ├── DEPLOYMENT_CHECKLIST.md # Deployment checklist │   └── TROUBLESHOOTING.md # Troubleshooting guide ├── 🛠️ scripts/            # Utility and startup scripts │   ├── start-system.sh   # Start both backend and frontend │   ├── deploy.sh         # Automated deployment script │   ├── setup-backend.sh  # Backend setup script │   ├── start-backend.sh  # Backend startup script │   ├── start-frontend.sh # Frontend startup script │   ├── quick-start.sh    # Quick setup script │   └── docker-compose.yml # Docker orchestration ├── 🧪 tests/              # Test files and scripts │   ├── test-session.py   # Session system tests │   ├── test-api.py       # API endpoint tests │   └── test-setup.py     # Setup validation tests └── 📋 .gitignore          # Git ignore patterns ```",
+  "main": "cypress.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/rohit.jagdale1/prepvista.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://gitlab.com/rohit.jagdale1/prepvista/issues"
+  },
+  "homepage": "https://gitlab.com/rohit.jagdale1/prepvista#readme",
+  "devDependencies": {
+    "@faker-js/faker": "^10.0.0",
+    "cypress": "^15.2.0"
+  }
+}

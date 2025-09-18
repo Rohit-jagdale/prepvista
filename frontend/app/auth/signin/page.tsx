@@ -11,6 +11,8 @@ import Logo from '@/components/Logo'
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
   const { data: session } = useSession()
@@ -27,8 +29,31 @@ export default function SignIn() {
       
       if (result?.error) {
         setError('Failed to sign in with Google. Please try again.')
-      } else if (result?.ok) {
-        router.push('/app')
+      } else if (result?.url) {
+        router.push(result.url)
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCredentialsSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setIsLoading(true)
+      setError('')
+      const result = await signIn('credentials', {
+        email,
+        password,
+        callbackUrl: '/app',
+        redirect: false,
+      })
+      if (result?.error) {
+        setError('Invalid email or password')
+      } else if (result?.url) {
+        router.push(result.url)
       }
     } catch (error) {
       setError('An unexpected error occurred. Please try again.')
@@ -68,6 +93,45 @@ export default function SignIn() {
                 {error}
               </div>
             )}
+
+            <form onSubmit={handleCredentialsSignIn} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-300 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white dark:bg-gray-900 px-2 text-sm text-gray-500">Or continue with</span>
+              </div>
+            </div>
 
             <div>
               <button

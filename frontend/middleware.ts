@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
   
   // Protect all /app routes
   if (pathname.startsWith('/app')) {
-    // Check if user has a session cookie
-    const hasSession = request.cookies.has('next-auth.session-token') || 
-                      request.cookies.has('__Secure-next-auth.session-token')
-    
-    if (!hasSession) {
+    if (!token) {
       // Redirect to landing page if no session
       return NextResponse.redirect(new URL('/', request.url))
     }
+  }
+
+  // Redirect authenticated users from / to /app
+  if (pathname === '/' && token) {
+    return NextResponse.redirect(new URL('/app', request.url))
   }
   
   return NextResponse.next()
@@ -21,6 +24,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/app/:path*',
   ],
 }

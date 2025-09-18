@@ -39,6 +39,7 @@ model User {
   email              String?             @unique
   emailVerified      DateTime?
   image              String?
+  passwordHash       String?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   hasUsedTrial       Boolean             @default(false)

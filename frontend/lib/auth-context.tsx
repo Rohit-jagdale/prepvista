@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignIn = async (provider: string = 'google') => {
     try {
-      await signIn(provider, { callbackUrl: '/' })
+      await signIn(provider, { callbackUrl: '/app' })
     } catch (error) {
       console.error('Sign in error:', error)
     }

@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
             const batch = chunkData.slice(i, i + batchSize);
             console.log(`Processing embedding batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(chunkData.length/batchSize)}`);
             
-            const batchPromises = batch.map(async (chunk) => {
+            const batchPromises = batch.map(async (chunk: typeof chunkData[number]) => {
               try {
                 const embeddingResponse = await fetch(buildAiUrl('/api/rag/generate-embedding'), {
                   method: 'POST',

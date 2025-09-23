@@ -27,6 +27,13 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.*
+frontend/.env*
+ai-backend/.env*
+# keep examples tracked
+!.env.example
+!frontend/.env.example
+!ai-backend/.env.example
 
 # Vercel
 .vercel

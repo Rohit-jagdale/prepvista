@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import type { Achievement } from '@prisma/client'
+
+type AchievementLite = { id: string }
 
 export const runtime = 'nodejs'
 
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     const userAchievements = user.achievements.map((ua: { achievement: { id: string } }) => ua.achievement.id)
 
     // Mark which achievements the user has earned
-    const achievementsWithStatus = allAchievements.map((achievement: Achievement) => ({
+    const achievementsWithStatus = allAchievements.map((achievement: AchievementLite) => ({
       ...achievement,
       isEarned: userAchievements.includes(achievement.id)
     }))

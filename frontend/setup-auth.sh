@@ -25,8 +25,16 @@ NEXTAUTH_SECRET=your-super-secret-key-here-change-in-production
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/prepvista?schema=public"
+# Database (Supabase recommended)
+# For Prisma migrations and reliability, point BOTH to the non-pooled 5432 URL from
+# Supabase > Project Settings > Database > Connection string > URI.
+# Example:
+#   postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres?schema=public&sslmode=require
+# If you later use PgBouncer (6543), keep DIRECT_URL on 5432 and you may set DATABASE_URL to 6543 with
+#   pgbouncer=true&connection_limit=1
+# but don't do that until everything works.
+DATABASE_URL="postgresql://username:password@localhost:5432/prepvista?schema=public&sslmode=disable"
+DIRECT_URL="postgresql://username:password@localhost:5432/prepvista?schema=public&sslmode=disable"
 
 # App Configuration
 NEXT_PUBLIC_APP_NAME=PrepVista

@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       where: { userId: user.id }
     })
 
-    const earnedAchievementIds = userAchievements.map(ua => ua.achievementId)
+    const earnedAchievementIds = userAchievements.map((ua: { achievementId: string }) => ua.achievementId)
     const newlyEarnedAchievements = []
 
     // Check "First Steps" achievement

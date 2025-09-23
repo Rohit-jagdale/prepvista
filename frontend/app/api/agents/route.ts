@@ -215,7 +215,16 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    const formattedAgents = agents.map(agent => ({
+    const formattedAgents = agents.map((agent: {
+      id: string;
+      name: string;
+      subject: string;
+      documents: { originalName?: string }[];
+      createdAt: Date;
+      _count: { questions: number };
+      lastUsed: Date;
+      status: string;
+    }) => ({
       id: agent.id,
       name: agent.name,
       subject: agent.subject,

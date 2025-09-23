@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const streakDays = currentStreak ? currentStreak.daysCount : 0
     
     // Get recent activity
-    const recentActivity = user.practiceSessions.slice(0, 5).map(session => ({
+    const recentActivity = user.practiceSessions.slice(0, 5).map((session: { completedAt: Date; examCategory: { name: string }; totalQuestions: number; score: number }) => ({
       date: session.completedAt,
       activity: `Completed ${session.examCategory.name} - ${session.totalQuestions} questions`,
       score: `${Math.round(session.score)}%`
@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     
     const weeklySessions = user.practiceSessions.filter(
-      session => session.completedAt >= sevenDaysAgo
+      (session: { completedAt: Date }) => session.completedAt >= sevenDaysAgo
     )
 
-    const performanceTrend = weeklySessions.map(session => ({
+    const performanceTrend = weeklySessions.map((session: { completedAt: Date; score: number; totalQuestions: number }) => ({
       date: session.completedAt.toISOString().split('T')[0],
       score: session.score,
       questions: session.totalQuestions
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       },
       recentActivity,
       performanceTrend,
-      achievements: user.achievements.map(ua => ({
+      achievements: user.achievements.map((ua: { achievement: { id: string; name: string; description: string; icon: string }; earnedAt: Date }) => ({
         id: ua.achievement.id,
         name: ua.achievement.name,
         description: ua.achievement.description,

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       currentStreak,
       allStreaks,
       totalStreaks: allStreaks.length,
-      longestStreak: allStreaks.length > 0 ? Math.max(...allStreaks.map(s => s.daysCount)) : 0
+      longestStreak: allStreaks.length > 0 ? Math.max(...allStreaks.map((s: { daysCount: number }) => s.daysCount)) : 0
     })
   } catch (error) {
     console.error('Error fetching streaks:', error)

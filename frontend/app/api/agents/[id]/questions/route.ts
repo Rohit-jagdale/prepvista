@@ -108,7 +108,20 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        questions: storedQuestions.map(q => ({
+        questions: storedQuestions.map((q: {
+          id: string;
+          questionType: string;
+          questionText: string;
+          options: any[];
+          correctAnswer: any;
+          explanation: string | null;
+          expectedAnswer?: string | null;
+          keyPoints?: any[];
+          evaluationCriteria?: any[];
+          centralConcept?: string | null;
+          expectedBranches?: any[];
+          difficulty: string;
+        }) => ({
           id: q.id,
           type: q.questionType.toLowerCase(),
           question: q.questionText,
@@ -162,7 +175,20 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        questions: storedQuestions.map(q => ({
+        questions: storedQuestions.map((q: {
+          id: string;
+          questionType: string;
+          questionText: string;
+          options: any[];
+          correctAnswer: any;
+          explanation: string | null;
+          expectedAnswer?: string | null;
+          keyPoints?: any[];
+          evaluationCriteria?: any[];
+          centralConcept?: string | null;
+          expectedBranches?: any[];
+          difficulty: string;
+        }) => ({
           id: q.id,
           type: q.questionType.toLowerCase(),
           question: q.questionText,

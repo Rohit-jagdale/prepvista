@@ -4,6 +4,16 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkUserSubscriptionStatus, markTrialAsUsed } from '@/lib/payment-utils';
 
+type PracticeSessionLite = {
+  id: string;
+  sessionName: string;
+  totalQuestions: number;
+  correctAnswers: number;
+  score: number;
+  timeSpent: number;
+  completedAt: Date | null;
+};
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -172,7 +182,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      practiceSessions: practiceSessions.map(session => ({
+      practiceSessions: practiceSessions.map((session: PracticeSessionLite) => ({
         id: session.id,
         sessionName: session.sessionName,
         totalQuestions: session.totalQuestions,

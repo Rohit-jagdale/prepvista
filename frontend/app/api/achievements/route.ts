@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get user's earned achievements
-    const userAchievements = user.achievements.map(ua => ua.achievement.id)
+    const userAchievements = user.achievements.map((ua: { achievement: { id: string } }) => ua.achievement.id)
 
     // Mark which achievements the user has earned
     const achievementsWithStatus = allAchievements.map(achievement => ({

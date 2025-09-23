@@ -95,7 +95,7 @@ export default function PracticePage() {
         const apiExamTypes = await api.getExamTypes();
         // Map API exam types to UI format
         const mappedExamTypes = apiExamTypes.exam_types.map((examId: string) => {
-          const staticExam = examTypes.find(e => e.id === examId);
+          const staticExam = examTypes.find((e: { id: string }) => e.id === examId);
           return staticExam || {
             id: examId,
             name: examId.charAt(0).toUpperCase() + examId.slice(1).replace('-', ' '),

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const currentStreak = user.studyStreaks.find(streak => streak.isActive)
+    const currentStreak = user.studyStreaks.find((streak: { isActive: boolean }) => streak.isActive)
     const allStreaks = user.studyStreaks
 
     return NextResponse.json({

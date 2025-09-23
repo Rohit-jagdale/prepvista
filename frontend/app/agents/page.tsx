@@ -199,7 +199,7 @@ export default function AgentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {agents.filter(agent => new Date(agent.lastUsed) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
+                  {agents.filter((agent: { lastUsed: string }) => new Date(agent.lastUsed) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
                 </p>
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function AgentsPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {agent.questionTypes.map((type) => {
-                      const typeInfo = questionTypeOptions.find(t => t.id === type);
+                      const typeInfo = questionTypeOptions.find((t: { id: string }) => t.id === type);
                       return typeInfo ? (
                         <span
                           key={type}

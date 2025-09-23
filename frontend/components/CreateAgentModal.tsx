@@ -100,7 +100,7 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
     setFormData(prev => ({
       ...prev,
       questionTypes: prev.questionTypes.includes(typeId)
-        ? prev.questionTypes.filter(id => id !== typeId)
+        ? prev.questionTypes.filter((id: string) => id !== typeId)
         : [...prev.questionTypes, typeId]
     }));
   };
@@ -466,7 +466,7 @@ export default function CreateAgentModal({ isOpen, onClose, onAgentCreated }: Cr
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   >
                     <option value="">Select a subject</option>
-                    {subjectOptions.map(subject => (
+                    {subjectOptions.map((subject: string) => (
                       <option key={subject} value={subject}>{subject}</option>
                     ))}
                   </select>

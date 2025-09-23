@@ -100,7 +100,7 @@ export default function PaymentModal({
           amount: data.amount,
           currency: data.currency,
           name: 'PrepVista',
-          description: paymentPlans.find(p => p.id === selectedPlan)?.description,
+          description: paymentPlans.find((p: { id: string }) => p.id === selectedPlan)?.description,
           order_id: data.orderId,
           handler: async (response: any) => {
             try {
@@ -275,7 +275,7 @@ export default function PaymentModal({
               ) : (
                 <>
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Pay ₹{paymentPlans.find(p => p.id === selectedPlan)?.price}
+                  Pay ₹{paymentPlans.find((p: { id: string }) => p.id === selectedPlan)?.price}
                 </>
               )}
             </button>

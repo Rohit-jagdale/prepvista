@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate statistics
-    const totalQuestions = user.practiceSessions.reduce((sum, session) => sum + session.totalQuestions, 0)
-    const totalCorrect = user.practiceSessions.reduce((sum, session) => sum + session.correctAnswers, 0)
+    const totalQuestions = user.practiceSessions.reduce((sum: number, session: { totalQuestions: number }) => sum + session.totalQuestions, 0)
+    const totalCorrect = user.practiceSessions.reduce((sum: number, session: { correctAnswers: number }) => sum + session.correctAnswers, 0)
     const accuracyRate = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0
     
     // Get current study streak

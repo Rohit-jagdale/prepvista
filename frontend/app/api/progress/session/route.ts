@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const newlyEarnedAchievements = []
 
     // Check "First Steps" achievement
-    const firstStepsAchievement = achievements.find(a => a.name === 'First Steps')
+    const firstStepsAchievement = achievements.find((a: { name: string }) => a.name === 'First Steps')
     if (firstStepsAchievement && !earnedAchievementIds.includes(firstStepsAchievement.id)) {
       const userAchievement = await prisma.userAchievement.create({
         data: {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check "Accuracy Master" achievement
-    const accuracyMasterAchievement = achievements.find(a => a.name === 'Accuracy Master')
+    const accuracyMasterAchievement = achievements.find((a: { name: string }) => a.name === 'Accuracy Master')
     if (accuracyMasterAchievement && accuracyRate >= 90 && !earnedAchievementIds.includes(accuracyMasterAchievement.id)) {
       const userAchievement = await prisma.userAchievement.create({
         data: {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check "Perfect Score" achievement
-    const perfectScoreAchievement = achievements.find(a => a.name === 'Perfect Score')
+    const perfectScoreAchievement = achievements.find((a: { name: string }) => a.name === 'Perfect Score')
     if (perfectScoreAchievement && accuracyRate === 100 && !earnedAchievementIds.includes(perfectScoreAchievement.id)) {
       const userAchievement = await prisma.userAchievement.create({
         data: {
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     // Check "Speed Demon" achievement (if timeSpent is provided and under 10 minutes)
     if (timeSpent && timeSpent < 600) {
-      const speedDemonAchievement = achievements.find(a => a.name === 'Speed Demon')
+      const speedDemonAchievement = achievements.find((a: { name: string }) => a.name === 'Speed Demon')
       if (speedDemonAchievement && !earnedAchievementIds.includes(speedDemonAchievement.id)) {
         const userAchievement = await prisma.userAchievement.create({
           data: {
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     })
     
     const totalCorrect = (totalCorrectAnswers._sum.correctAnswers || 0) + score
-    const questionCrusherAchievement = achievements.find(a => a.name === 'Question Crusher')
+    const questionCrusherAchievement = achievements.find((a: { name: string }) => a.name === 'Question Crusher')
     if (questionCrusherAchievement && totalCorrect >= 100 && !earnedAchievementIds.includes(questionCrusherAchievement.id)) {
       const userAchievement = await prisma.userAchievement.create({
         data: {
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       distinct: ['examCategoryId']
     })
     
-    const examExplorerAchievement = achievements.find(a => a.name === 'Exam Explorer')
+    const examExplorerAchievement = achievements.find((a: { name: string }) => a.name === 'Exam Explorer')
     if (examExplorerAchievement && uniqueCategories.length >= 3 && !earnedAchievementIds.includes(examExplorerAchievement.id)) {
       const userAchievement = await prisma.userAchievement.create({
         data: {

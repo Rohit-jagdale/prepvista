@@ -86,7 +86,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
     setFormData(prev => ({
       ...prev,
       questionTypes: prev.questionTypes.includes(typeId)
-        ? prev.questionTypes.filter(id => id !== typeId)
+        ? prev.questionTypes.filter((id: string) => id !== typeId)
         : [...prev.questionTypes, typeId]
     }));
   };
@@ -313,7 +313,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Select a subject</option>
-                {SUBJECTS.map(subject => (
+                {SUBJECTS.map((subject: string) => (
                   <option key={subject} value={subject}>{subject}</option>
                 ))}
               </select>
@@ -337,7 +337,7 @@ export default function CreateAgentModalNew({ isOpen, onClose, onAgentCreated }:
                 Question Types *
               </label>
               <div className="grid grid-cols-1 gap-3">
-                {QUESTION_TYPES.map(type => (
+                {QUESTION_TYPES.map((type: { id: string; label: string; description: string }) => (
                   <label key={type.id} className="flex items-start space-x-3 cursor-pointer">
                     <input
                       type="checkbox"

@@ -26,8 +26,8 @@ export default function AchievementsDisplay({ achievements, loading }: Achieveme
     )
   }
 
-  const earnedAchievements = achievements.filter(a => a.isEarned)
-  const unearnedAchievements = achievements.filter(a => !a.isEarned)
+  const earnedAchievements = achievements.filter((a: { isEarned: boolean }) => a.isEarned)
+  const unearnedAchievements = achievements.filter((a: { isEarned: boolean }) => !a.isEarned)
 
   return (
     <div className="card">

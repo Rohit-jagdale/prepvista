@@ -23,7 +23,7 @@ export default function PerformanceChart({ data, period }: PerformanceChartProps
   const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   
   // Find min and max scores for scaling
-  const scores = sortedData.map(d => d.score)
+  const scores = sortedData.map((d: { score: number }) => d.score)
   const minScore = Math.min(...scores)
   const maxScore = Math.max(...scores)
   const scoreRange = maxScore - minScore

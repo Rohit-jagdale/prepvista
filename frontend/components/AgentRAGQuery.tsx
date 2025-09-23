@@ -155,7 +155,7 @@ export default function AgentRAGQuery({ agentId, agentName, onClose }: AgentRAGQ
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          const conversation = conversations.find(c => c.id === conversationId);
+          const conversation = conversations.find((c: { id: string }) => c.id === conversationId);
           if (conversation) {
             setCurrentConversation({
               ...conversation,
@@ -483,7 +483,7 @@ export default function AgentRAGQuery({ agentId, agentName, onClose }: AgentRAGQ
                     </span>
                     {response.similarity_scores && (
                       <span className="text-sm text-green-700 dark:text-green-300">
-                        • Similarity: {response.similarity_scores.map(s => Math.round(s * 100)).join(', ')}%
+                        • Similarity: {response.similarity_scores.map((s: number) => Math.round(s * 100)).join(', ')}%
                       </span>
                     )}
                   </div>

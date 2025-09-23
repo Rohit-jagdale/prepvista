@@ -71,8 +71,8 @@ export default function ExamSelection({ examType, onBack, onTopicSelect }: ExamS
       try {
         const apiTopics = await api.getTopics(examType);
         // Map API topics to UI format
-        const mappedTopics = apiTopics.topics.map(topicId => {
-          const staticTopic = examTopics[examType as keyof typeof examTopics]?.find(t => t.id === topicId);
+        const mappedTopics = apiTopics.topics.map((topicId: string) => {
+          const staticTopic = examTopics[examType as keyof typeof examTopics]?.find((t: { id: string }) => t.id === topicId);
           return staticTopic || {
             id: topicId,
             name: topicId.charAt(0).toUpperCase() + topicId.slice(1).replace('-', ' '),

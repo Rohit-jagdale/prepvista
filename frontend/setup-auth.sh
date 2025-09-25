@@ -40,6 +40,10 @@ DIRECT_URL="postgresql://username:password@localhost:5432/prepvista?schema=publi
 NEXT_PUBLIC_APP_NAME=PrepVista
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+
+# Supabase client (frontend)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 EOL
 
 echo "✅ Setup complete!"
@@ -50,6 +54,7 @@ echo "2. Update .env.local with your actual values:"
 echo "   - Get Google OAuth credentials from Google Cloud Console"
 echo "   - Set up PostgreSQL database"
 echo "   - Generate a strong NEXTAUTH_SECRET"
+echo "   - Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"
 echo "3. Run: pnpm db:push (to create database tables)"
 echo "4. Run: pnpm dev (to start development server)"
 echo ""

@@ -4,19 +4,35 @@ import { getToken } from 'next-auth/jwt'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
   
-  // Protect all /app routes
-  if (pathname.startsWith('/app')) {
-    if (!token) {
-      // Redirect to landing page if no session
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  // Skip middleware for API routes, auth routes, and static files
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next()
   }
-
-  // Redirect authenticated users from / to /app
-  if (pathname === '/' && token) {
-    return NextResponse.redirect(new URL('/app', request.url))
+  
+  // Only protect /app routes - let other routes pass through
+  if (pathname.startsWith('/app')) {
+    try {
+      const token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET
+      })
+      
+      if (!token) {
+        // Redirect to signin page instead of home
+        return NextResponse.redirect(new URL('/auth/signin', request.url))
+      }
+    } catch (error) {
+      console.error('Middleware error:', error)
+      // If there's an error, redirect to signin
+      return NextResponse.redirect(new URL('/auth/signin', request.url))
+    }
   }
   
   return NextResponse.next()
@@ -24,7 +40,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
-    '/app/:path*',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - auth (auth routes)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
   ],
 }

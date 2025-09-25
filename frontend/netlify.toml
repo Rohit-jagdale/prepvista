@@ -5,10 +5,12 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Next.js handles routing internally, so we don't need catch-all redirects
+# Only redirect specific static files if needed
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  from = "/favicon.ico"
+  to = "/assets/images/PrepVista_favicon.png"
+  status = 301
 
 [functions]
   directory = "functions"

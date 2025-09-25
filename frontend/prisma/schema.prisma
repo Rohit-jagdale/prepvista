@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -102,24 +101,14 @@ model Document {
 }
 
 model DocumentChunk {
-  id         String            @id @default(cuid())
+  id         String   @id @default(cuid())
   documentId String
   content    String
   pageNumber Int?
   chunkIndex Int
   metadata   Json?
-  createdAt  DateTime          @default(now())
-  document   Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  vectors    VectorEmbedding[]
-}
-
-model VectorEmbedding {
-  id        String                @id @default(cuid())
-  chunkId   String
-  embedding Unsupported("vector")
-  model     String                @default("text-embedding-004")
-  createdAt DateTime              @default(now())
-  chunk     DocumentChunk         @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }
 
 model AIQuestion {

@@ -25,7 +25,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Welcome to Your Dashboard
+            Welcome to PrepVista Dashboard
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Ready to start your exam preparation journey? Click below to begin practicing with AI-powered questions tailored to your needs.

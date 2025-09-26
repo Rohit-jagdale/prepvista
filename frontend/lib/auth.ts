@@ -40,14 +40,32 @@ export const authOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: any) {
+      console.log('🔑 NextAuth JWT Callback:', {
+        hasToken: !!token,
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        timestamp: new Date().toISOString()
+      })
+      
       if (user?.id) {
         token.id = user.id
+        console.log('✅ NextAuth JWT - Added user ID to token:', user.id)
       }
       return token
     },
     async session({ session, token }: any) {
+      console.log('🎫 NextAuth Session Callback:', {
+        hasSession: !!session,
+        hasToken: !!token,
+        userId: token?.id,
+        userEmail: session?.user?.email,
+        timestamp: new Date().toISOString()
+      })
+      
       if (session.user && token?.id) {
         session.user.id = token.id
+        console.log('✅ NextAuth Session - Added user ID to session:', token.id)
       }
       return session
     },

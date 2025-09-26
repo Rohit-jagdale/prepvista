@@ -18,21 +18,28 @@ export default function SignIn() {
   const { data: session } = useSession()
 
   const handleGoogleSignIn = async () => {
+    console.log('🔐 SignIn Page - Google sign in initiated')
     try {
       setIsLoading(true)
       setError('')
       
+      console.log('🔄 SignIn Page - Calling signIn with Google')
       const result = await signIn('google', { 
         callbackUrl: '/app',
         redirect: false 
       })
       
+      console.log('📋 SignIn Page - Google sign in result:', result)
+      
       if (result?.error) {
+        console.error('❌ SignIn Page - Google sign in error:', result.error)
         setError('Failed to sign in with Google. Please try again.')
       } else if (result?.url) {
+        console.log('✅ SignIn Page - Google sign in successful, redirecting to:', result.url)
         router.push(result.url)
       }
     } catch (error) {
+      console.error('💥 SignIn Page - Google sign in exception:', error)
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -41,21 +48,30 @@ export default function SignIn() {
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🔐 SignIn Page - Credentials sign in initiated')
     try {
       setIsLoading(true)
       setError('')
+      
+      console.log('🔄 SignIn Page - Calling signIn with credentials')
       const result = await signIn('credentials', {
         email,
         password,
         callbackUrl: '/app',
         redirect: false,
       })
+      
+      console.log('📋 SignIn Page - Credentials sign in result:', result)
+      
       if (result?.error) {
+        console.error('❌ SignIn Page - Credentials sign in error:', result.error)
         setError('Invalid email or password')
       } else if (result?.url) {
+        console.log('✅ SignIn Page - Credentials sign in successful, redirecting to:', result.url)
         router.push(result.url)
       }
     } catch (error) {
+      console.error('💥 SignIn Page - Credentials sign in exception:', error)
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)

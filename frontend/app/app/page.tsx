@@ -3,8 +3,21 @@
 import { BookOpen, Target, TrendingUp, Award, Users, Building2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    console.log('🏠 App Dashboard - Component mounted:', {
+      hasSession: !!session,
+      status,
+      user: session?.user,
+      timestamp: new Date().toISOString()
+    });
+  }, [session, status]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />

@@ -14,14 +14,30 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
   const { isAuthenticated, loading } = useAuth()
   const router = useRouter()
 
+  // Debug logging for AuthGuard
+  console.log('🛡️ AuthGuard - Current state:', {
+    isAuthenticated,
+    loading,
+    timestamp: new Date().toISOString()
+  })
+
   useEffect(() => {
+    console.log('🔄 AuthGuard - useEffect triggered:', {
+      loading,
+      isAuthenticated,
+      willRedirect: !loading && !isAuthenticated,
+      timestamp: new Date().toISOString()
+    })
+    
     if (!loading && !isAuthenticated) {
+      console.log('🚫 AuthGuard - Not authenticated, redirecting to home')
       router.push('/')
     }
   }, [isAuthenticated, loading, router])
 
   // Show loading state while checking authentication
   if (loading) {
+    console.log('⏳ AuthGuard - Showing loading state')
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         <GlobalLoading text="Checking authentication..." size="lg" fullScreen={true} />
@@ -31,6 +47,7 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
 
   // Show fallback or redirect if not authenticated
   if (!isAuthenticated) {
+    console.log('❌ AuthGuard - Not authenticated, showing access denied')
     if (fallback) {
       return <>{fallback}</>
     }
@@ -56,5 +73,6 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
   }
 
   // User is authenticated, show the protected content
+  console.log('✅ AuthGuard - User authenticated, showing protected content')
   return <>{children}</>
 }

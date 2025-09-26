@@ -17,25 +17,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const [loading, setLoading] = useState(true)
 
+  // Debug logging for session changes
   useEffect(() => {
+    console.log('🔄 AuthProvider - Session status changed:', {
+      status,
+      hasSession: !!session,
+      user: session?.user,
+      timestamp: new Date().toISOString()
+    })
+    
     if (status !== 'loading') {
       setLoading(false)
     }
-  }, [status])
+  }, [status, session])
 
   const handleSignIn = async (provider: string = 'google') => {
+    console.log('🔐 AuthProvider - Sign in initiated:', {
+      provider,
+      callbackUrl: '/app',
+      timestamp: new Date().toISOString()
+    })
+    
     try {
-      await signIn(provider, { callbackUrl: '/app' })
+      const result = await signIn(provider, { callbackUrl: '/app' })
+      console.log('✅ AuthProvider - Sign in result:', result)
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('❌ AuthProvider - Sign in error:', error)
     }
   }
 
   const handleSignOut = async () => {
+    console.log('🚪 AuthProvider - Sign out initiated:', {
+      callbackUrl: '/',
+      timestamp: new Date().toISOString()
+    })
+    
     try {
-      await signOut({ callbackUrl: '/' })
+      const result = await signOut({ callbackUrl: '/' })
+      console.log('✅ AuthProvider - Sign out result:', result)
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error('❌ AuthProvider - Sign out error:', error)
     }
   }
 
@@ -46,6 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut: handleSignOut,
     isAuthenticated: !!session?.user,
   }
+
+  console.log('🎯 AuthProvider - Current auth state:', {
+    isAuthenticated: value.isAuthenticated,
+    loading: value.loading,
+    hasUser: !!value.user,
+    userEmail: value.user?.email,
+    timestamp: new Date().toISOString()
+  })
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

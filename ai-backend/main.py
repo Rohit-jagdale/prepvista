@@ -14,6 +14,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 import yaml
 from pathlib import Path
+import tempfile
 import shutil
 import uuid
 
@@ -740,8 +741,8 @@ async def upload_pdf(
     try:
         start_time = time.time()
         
-        # Create uploads directory if it doesn't exist
-        uploads_dir = Path("uploads")
+        # Use serverless-friendly temp directory
+        uploads_dir = Path(tempfile.gettempdir()) / "prepvt_uploads"
         uploads_dir.mkdir(exist_ok=True)
         
         # Generate unique filename

@@ -1,0 +1,455 @@
+{
+  "info": {
+    "name": "PrepVista AI Backend",
+    "description": "Complete API collection for PrepVista AI-powered exam preparation platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://your-vercel-app.vercel.app",
+      "type": "string"
+    },
+    {
+      "key": "agentId",
+      "value": "test-agent-123",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "test-doc-456",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Debug",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Debug Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/debug",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "debug"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Model Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/model-info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "model-info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Prompt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test-prompt",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test-prompt"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exam Management",
+      "item": [
+        {
+          "name": "Get Exam Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/exam-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "exam-types"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Topics for Exam",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/topics/upsc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "topics", "upsc"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Question Generation",
+      "item": [
+        {
+          "name": "Generate Basic Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exam_type\": \"upsc\",\n  \"topic\": \"mathematics\",\n  \"difficulty\": \"medium\",\n  \"count\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate AI Agent Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"{{agentId}}\",\n  \"subject\": \"Mathematics\",\n  \"question_types\": [\"mcq\", \"short_answer\"],\n  \"question_count\": 2,\n  \"difficulty\": \"medium\",\n  \"document_content\": \"This is a sample document about algebra and calculus. It covers topics like linear equations, derivatives, and integrals.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-agents/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-agents", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate RAG Enhanced Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"{{agentId}}\",\n  \"subject\": \"Physics\",\n  \"question_types\": [\"mcq\", \"numerical\"],\n  \"question_count\": 2,\n  \"difficulty\": \"hard\",\n  \"document_content\": \"This document covers quantum mechanics and thermodynamics principles.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-agents/questions/rag",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-agents", "questions", "rag"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RAG - Document Management",
+      "item": [
+        {
+          "name": "Upload PDF",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "agent_id",
+                  "value": "{{agentId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "document_id",
+                  "value": "{{documentId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/upload-pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "upload-pdf"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Embedding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"This is a sample text for embedding generation. It will be converted to a vector representation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/generate-embedding",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "generate-embedding"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Store Embeddings Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"embeddings\": [\n    {\n      \"chunk_id\": \"chunk-1\",\n      \"embedding\": [0.1, 0.2, 0.3, 0.4, 0.5],\n      \"model\": \"text-embedding-004\"\n    },\n    {\n      \"chunk_id\": \"chunk-2\",\n      \"embedding\": [0.6, 0.7, 0.8, 0.9, 1.0],\n      \"model\": \"text-embedding-004\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/store-embeddings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "store-embeddings"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RAG - Query & Search",
+      "item": [
+        {
+          "name": "RAG Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What are the main principles of quantum mechanics?\",\n  \"agent_id\": \"{{agentId}}\",\n  \"document_id\": \"{{documentId}}\",\n  \"max_context_chunks\": 5,\n  \"include_sources\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "query"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Document Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"thermodynamics laws\",\n  \"agent_id\": \"{{agentId}}\",\n  \"document_id\": \"{{documentId}}\",\n  \"max_results\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "search"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get RAG Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rag/stats/{{agentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rag", "stats", "{{agentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "Complete Question Generation Flow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exam_type\": \"cat\",\n  \"topic\": \"quantitative\",\n  \"difficulty\": \"hard\",\n  \"count\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RAG Query with Multiple Question Types",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"{{agentId}}\",\n  \"subject\": \"Computer Science\",\n  \"question_types\": [\"mcq\", \"coding\", \"explanation\"],\n  \"question_count\": 3,\n  \"difficulty\": \"medium\",\n  \"document_content\": \"This document covers data structures, algorithms, and software engineering principles including arrays, linked lists, sorting algorithms, and design patterns.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-agents/questions/rag",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-agents", "questions", "rag"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error Test - Invalid Exam Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/topics/invalid-exam",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "topics", "invalid-exam"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error Test - Missing Required Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exam_type\": \"upsc\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-generate test data if needed",
+          "if (!pm.variables.get('agentId')) {",
+          "    pm.variables.set('agentId', 'test-agent-' + Date.now());",
+          "}",
+          "if (!pm.variables.get('documentId')) {",
+          "    pm.variables.set('documentId', 'test-doc-' + Date.now());",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test('Response time is less than 30000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON', function () {",
+          "    if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+          "        pm.response.to.be.json;",
+          "    }",
+          "});",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "if (pm.response.json()) {",
+          "    console.log('Response Body:', JSON.stringify(pm.response.json(), null, 2));",
+          "}"
+        ]
+      }
+    }
+  ]
+}
